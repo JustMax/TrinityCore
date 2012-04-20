@@ -382,7 +382,6 @@ ChatCommand* ChatHandler::getCommandTable()
         { "linkgrave",      SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleLinkGraveCommand>,           "", NULL },
         { "neargrave",      SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleNearGraveCommand>,           "", NULL },
         { "explorecheat",   SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleExploreCheatCommand>,        "", NULL },
-        { "hover",          SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleHoverCommand>,               "", NULL },
         { "levelup",        SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleLevelUpCommand>,             "", NULL },
         { "showarea",       SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleShowAreaCommand>,            "", NULL },
         { "hidearea",       SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleHideAreaCommand>,            "", NULL },
@@ -401,7 +400,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "movegens",       SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleMovegensCommand>,            "", NULL },
         { "cometome",       SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleComeToMeCommand>,            "", NULL },
         { "damage",         SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleDamageCommand>,              "", NULL },
-        { "combatstop",     SEC_GAMEMASTER,     false, OldHandler<&ChatHandler::HandleCombatStopCommand>,          "", NULL },
+        { "combatstop",     SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleCombatStopCommand>,          "", NULL },
         { "flusharenapoints", SEC_ADMINISTRATOR, false, OldHandler<&ChatHandler::HandleFlushArenaPointsCommand>,    "", NULL },
         { "repairitems",    SEC_GAMEMASTER,     true,  OldHandler<&ChatHandler::HandleRepairitemsCommand>,         "", NULL },
         { "waterwalk",      SEC_GAMEMASTER,     false, OldHandler<&ChatHandler::HandleWaterwalkCommand>,           "", NULL },
@@ -1335,7 +1334,7 @@ GameTele const* ChatHandler::extractGameTeleFromLink(char* text)
     // id, or string, or [name] Shift-click form |color|Htele:id|h[name]|h|r
     char* cId = extractKeyFromLink(text, "Htele");
     if (!cId)
-        return false;
+        return NULL;
 
     // id case (explicit or from shift link)
     if (cId[0] >= '0' || cId[0] >= '9')
@@ -1507,7 +1506,7 @@ char* ChatHandler::extractQuotedArg(char* args)
     {
         char* space = strtok(args, "\"");
         if (!space)
-            return false;
+            return NULL;
         return strtok(NULL, "\"");
     }
 }

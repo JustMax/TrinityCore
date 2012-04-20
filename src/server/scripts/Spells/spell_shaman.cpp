@@ -35,6 +35,9 @@ enum ShamanSpells
     SHAMAN_SPELL_FIRE_NOVA_TRIGGERED_R1    = 8349,
     SHAMAN_SPELL_SATED                     = 57724,
     SHAMAN_SPELL_EXHAUSTION                = 57723,
+    
+    SHAMAN_SPELL_STORM_EARTH_AND_FIRE      = 51483,
+    EARTHBIND_TOTEM_SPELL_EARTHGRAB        = 64695,
 
     // For Earthen Power
     SHAMAN_TOTEM_SPELL_EARTHBIND_TOTEM     = 6474,
@@ -221,9 +224,25 @@ class spell_sha_earthbind_totem : public SpellScriptLoader
                                         caster->CastSpell(caster, SHAMAN_TOTEM_SPELL_EARTHEN_POWER, true, NULL, aurEff);
             }
 
+            void Apply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+            {
+                if (!GetCaster())
+                    return;
+                Player* owner = GetCaster()->GetCharmerOrOwnerPlayerOrPlayerItself();
+                if (!owner)
+                    return;
+                // Storm, Earth and Fire
+                if (AuraEffect* aurEff = owner->GetAuraEffectOfRankedSpell(SHAMAN_SPELL_STORM_EARTH_AND_FIRE, EFFECT_1))
+                {
+                    if (roll_chance_i(aurEff->GetAmount()))
+                        GetCaster()->CastSpell(GetCaster(), EARTHBIND_TOTEM_SPELL_EARTHGRAB, false);
+                }
+            }
+
             void Register()
             {
                  OnEffectPeriodic += AuraEffectPeriodicFn(spell_sha_earthbind_totem_AuraScript::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+                 OnEffectApply += AuraEffectApplyFn(spell_sha_earthbind_totem_AuraScript::Apply, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
@@ -542,6 +561,55 @@ class spell_sha_lava_lash : public SpellScriptLoader
         }
 };
 
+// 1064 Chain Heal
+class spell_sha_chain_heal : public SpellScriptLoader
+{
+    public:
+        spell_sha_chain_heal() : SpellScriptLoader("spell_sha_chain_heal") { }
+
+        class spell_sha_chain_heal_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_sha_chain_heal_SpellScript);
+
+            bool Load()
+            {
+                firstHeal = true;
+                riptide = false;
+                return true;
+            }
+
+            void HandleHeal(SpellEffIndex /*effIndex*/)
+            {
+                if (firstHeal)
+                {
+                    // Check if the target has Riptide
+                    if (AuraEffect* aurEff = GetHitUnit()->GetAuraEffect(SPELL_AURA_PERIODIC_HEAL, SPELLFAMILY_SHAMAN, 0, 0, 0x10, GetCaster()->GetGUID()))
+                    {
+                        riptide = true;
+                        // Consume it
+                        GetHitUnit()->RemoveAura(aurEff->GetBase());
+                    }
+                    firstHeal = false;
+                }
+                // Riptide increases the Chain Heal effect by 25%
+                if (riptide)
+                    SetHitHeal(GetHitHeal() * 1.25f);
+            }
+
+            void Register()
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_sha_chain_heal_SpellScript::HandleHeal, EFFECT_0, SPELL_EFFECT_HEAL);
+            }
+
+            bool firstHeal;
+            bool riptide;
+        };
+
+        SpellScript* GetSpellScript() const
+        {
+            return new spell_sha_chain_heal_SpellScript();
+        }
+};
 
 void AddSC_shaman_spell_scripts()
 {
@@ -556,4 +624,5 @@ void AddSC_shaman_spell_scripts()
     new spell_sha_healing_stream_totem();
     new spell_sha_mana_spring_totem();
     new spell_sha_lava_lash();
+    new spell_sha_chain_heal();
 }

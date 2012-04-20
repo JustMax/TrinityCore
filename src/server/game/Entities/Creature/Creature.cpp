@@ -357,8 +357,9 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData* data)
 
     m_regenHealth = cInfo->RegenHealth;
 
-    // creatures always have melee weapon ready if any
-    SetSheath(SHEATH_STATE_MELEE);
+    // creatures always have melee weapon ready if any unless specified otherwise
+    if (!GetCreatureAddon())
+        SetSheath(SHEATH_STATE_MELEE);
 
     SelectLevel(GetCreatureTemplate());
     if (team == HORDE)
@@ -795,10 +796,12 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
 
     //! Need to be called after LoadCreaturesAddon - MOVEMENTFLAG_HOVER is set there
     if (HasUnitMovementFlag(MOVEMENTFLAG_HOVER))
+    {
         z += GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
 
-    //! Relocate again with updated Z coord
-    Relocate(x, y, z, ang);
+        //! Relocate again with updated Z coord
+        Relocate(x, y, z, ang);
+    }
 
     uint32 displayID = GetNativeDisplayId();
     CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);

@@ -1040,8 +1040,9 @@ public:
             }
         }
 
-        void WaypointReached(uint32 /*point*/)
+        void WaypointReached(uint32 /*waypointId*/)
         {
+
         }
 
         void UpdateAI(uint32 const diff)
@@ -2399,6 +2400,9 @@ enum eLockSmith
     QUEST_HOTTER_THAN_HELL_H              = 10764,
     QUEST_RETURN_TO_KHAGDAR               = 9837,
     QUEST_CONTAINMENT                     = 13159,
+    QUEST_ETERNAL_VIGILANCE               = 11011,
+    QUEST_KEY_TO_THE_FOCUSING_IRIS        = 13372,
+    QUEST_HC_KEY_TO_THE_FOCUSING_IRIS     = 13375,
 
     ITEM_ARCATRAZ_KEY                     = 31084,
     ITEM_SHADOWFORGE_KEY                  = 11000,
@@ -2406,21 +2410,28 @@ enum eLockSmith
     ITEM_SHATTERED_HALLS_KEY              = 28395,
     ITEM_THE_MASTERS_KEY                  = 24490,
     ITEM_VIOLET_HOLD_KEY                  = 42482,
+    ITEM_ESSENCE_INFUSED_MOONSTONE        = 32449,
+    ITEM_KEY_TO_THE_FOCUSING_IRIS         = 44582,
+    ITEM_HC_KEY_TO_THE_FOCUSING_IRIS      = 44581,
 
     SPELL_ARCATRAZ_KEY                    = 54881,
     SPELL_SHADOWFORGE_KEY                 = 54882,
     SPELL_SKELETON_KEY                    = 54883,
     SPELL_SHATTERED_HALLS_KEY             = 54884,
     SPELL_THE_MASTERS_KEY                 = 54885,
-    SPELL_VIOLET_HOLD_KEY                 = 67253
+    SPELL_VIOLET_HOLD_KEY                 = 67253,
+    SPELL_ESSENCE_INFUSED_MOONSTONE       = 40173,
 };
 
-#define GOSSIP_LOST_ARCATRAZ_KEY         "I've lost my key to the Arcatraz."
-#define GOSSIP_LOST_SHADOWFORGE_KEY      "I've lost my key to the Blackrock Depths."
-#define GOSSIP_LOST_SKELETON_KEY         "I've lost my key to the Scholomance."
-#define GOSSIP_LOST_SHATTERED_HALLS_KEY  "I've lost my key to the Shattered Halls."
-#define GOSSIP_LOST_THE_MASTERS_KEY      "I've lost my key to the Karazhan."
-#define GOSSIP_LOST_VIOLET_HOLD_KEY      "I've lost my key to the Violet Hold."
+#define GOSSIP_LOST_ARCATRAZ_KEY                "I've lost my key to the Arcatraz."
+#define GOSSIP_LOST_SHADOWFORGE_KEY             "I've lost my key to the Blackrock Depths."
+#define GOSSIP_LOST_SKELETON_KEY                "I've lost my key to the Scholomance."
+#define GOSSIP_LOST_SHATTERED_HALLS_KEY         "I've lost my key to the Shattered Halls."
+#define GOSSIP_LOST_THE_MASTERS_KEY             "I've lost my key to the Karazhan."
+#define GOSSIP_LOST_VIOLET_HOLD_KEY             "I've lost my key to the Violet Hold."
+#define GOSSIP_LOST_ESSENCE_INFUSED_MOONSTONE   "I've lost my Essence-Infused Moonstone."
+#define GOSSIP_LOST_KEY_TO_THE_FOCUSING_IRIS    "I've lost my Key to the Focusing Iris."
+#define GOSSIP_LOST_HC_KEY_TO_THE_FOCUSING_IRIS "I've lost my Heroic Key to the Focusing Iris."
 
 class npc_locksmith : public CreatureScript
 {
@@ -2455,6 +2466,18 @@ public:
         if (player->GetQuestRewardStatus(QUEST_CONTAINMENT) && !player->HasItemCount(ITEM_VIOLET_HOLD_KEY, 1, true))
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_LOST_VIOLET_HOLD_KEY, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 6);
 
+        // Essence-Infused Moonstone
+        if (player->GetQuestRewardStatus(QUEST_ETERNAL_VIGILANCE) && !player->HasItemCount(ITEM_ESSENCE_INFUSED_MOONSTONE, 1, true))
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_LOST_ESSENCE_INFUSED_MOONSTONE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 7);
+
+        // Key to the Focusing Iris
+        if (player->GetQuestRewardStatus(QUEST_KEY_TO_THE_FOCUSING_IRIS) && !player->HasItemCount(ITEM_KEY_TO_THE_FOCUSING_IRIS, 1, true))
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_LOST_KEY_TO_THE_FOCUSING_IRIS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 8);
+
+        // Heroic Key to the Focusing Iris
+        if (player->GetQuestRewardStatus(QUEST_HC_KEY_TO_THE_FOCUSING_IRIS) && !player->HasItemCount(ITEM_HC_KEY_TO_THE_FOCUSING_IRIS, 1, true))
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_LOST_HC_KEY_TO_THE_FOCUSING_IRIS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 9);
+
         player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
 
         return true;
@@ -2488,6 +2511,18 @@ public:
             case GOSSIP_ACTION_INFO_DEF + 6:
                 player->CLOSE_GOSSIP_MENU();
                 player->CastSpell(player, SPELL_VIOLET_HOLD_KEY, false);
+                break;
+            case GOSSIP_ACTION_INFO_DEF + 7:
+                player->CLOSE_GOSSIP_MENU();
+                player->CastSpell(player, SPELL_ESSENCE_INFUSED_MOONSTONE, false);
+                break;
+            case GOSSIP_ACTION_INFO_DEF + 8:
+                player->CLOSE_GOSSIP_MENU();
+                player->AddItem(ITEM_KEY_TO_THE_FOCUSING_IRIS,1);
+                break;
+            case GOSSIP_ACTION_INFO_DEF + 9:
+                player->CLOSE_GOSSIP_MENU();
+                player->AddItem(ITEM_HC_KEY_TO_THE_FOCUSING_IRIS,1);
                 break;
         }
         return true;
@@ -3098,35 +3133,35 @@ public:
 
 void AddSC_npcs_special()
 {
-    new npc_air_force_bots;
-    new npc_lunaclaw_spirit;
-    new npc_chicken_cluck;
-    new npc_dancing_flames;
-    new npc_doctor;
-    new npc_injured_patient;
-    new npc_garments_of_quests;
-    new npc_guardian;
-    new npc_mount_vendor;
-    new npc_rogue_trainer;
-    new npc_sayge;
-    new npc_steam_tonk;
-    new npc_tonk_mine;
-    new npc_winter_reveler;
-    new npc_brewfest_reveler;
-    new npc_snake_trap;
-    new npc_mirror_image;
-    new npc_ebon_gargoyle;
-    new npc_lightwell;
-    new mob_mojo;
-    new npc_training_dummy;
-    new npc_shadowfiend;
-    new npc_wormhole;
-    new npc_pet_trainer;
-    new npc_locksmith;
-    new npc_tabard_vendor;
-    new npc_experience;
-    new npc_fire_elemental;
-    new npc_earth_elemental;
-    new npc_firework;
+    new npc_air_force_bots();
+    new npc_lunaclaw_spirit();
+    new npc_chicken_cluck();
+    new npc_dancing_flames();
+    new npc_doctor();
+    new npc_injured_patient();
+    new npc_garments_of_quests();
+    new npc_guardian();
+    new npc_mount_vendor();
+    new npc_rogue_trainer();
+    new npc_sayge();
+    new npc_steam_tonk();
+    new npc_tonk_mine();
+    new npc_winter_reveler();
+    new npc_brewfest_reveler();
+    new npc_snake_trap();
+    new npc_mirror_image();
+    new npc_ebon_gargoyle();
+    new npc_lightwell();
+    new mob_mojo();
+    new npc_training_dummy();
+    new npc_shadowfiend();
+    new npc_wormhole();
+    new npc_pet_trainer();
+    new npc_locksmith();
+    new npc_tabard_vendor();
+    new npc_experience();
+    new npc_fire_elemental();
+    new npc_earth_elemental();
+    new npc_firework();
     new npc_spring_rabbit();
 }

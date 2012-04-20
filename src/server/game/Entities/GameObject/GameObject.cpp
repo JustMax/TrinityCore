@@ -135,10 +135,10 @@ void GameObject::AddToWorld()
         sObjectAccessor->AddObject(this);
         bool startOpen = (GetGoType() == GAMEOBJECT_TYPE_DOOR || GetGoType() == GAMEOBJECT_TYPE_BUTTON ? GetGOInfo()->door.startOpen : false);
         // The state can be changed after GameObject::Create but before GameObject::AddToWorld
-        bool toggledState = GetGoState() == GO_STATE_READY;
+        bool toggledState = GetGOData() ? GetGOData()->go_state == GO_STATE_READY : false;
         if (m_model)
             GetMap()->Insert(*m_model);
-        if ((startOpen && !toggledState) || (!startOpen && toggledState))
+        if (startOpen ^ toggledState)
             EnableCollision(false);
 
         WorldObject::AddToWorld();
@@ -840,7 +840,9 @@ bool GameObject::IsTransport() const
 {
     // If something is marked as a transport, don't transmit an out of range packet for it.
     GameObjectTemplate const* gInfo = GetGOInfo();
-    if (!gInfo) return false;
+    if (!gInfo)
+        return false;
+
     return gInfo->type == GAMEOBJECT_TYPE_TRANSPORT || gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT;
 }
 
@@ -849,7 +851,9 @@ bool GameObject::IsDynTransport() const
 {
     // If something is marked as a transport, don't transmit an out of range packet for it.
     GameObjectTemplate const* gInfo = GetGOInfo();
-    if (!gInfo) return false;
+    if (!gInfo)
+        return false;
+
     return gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT || (gInfo->type == GAMEOBJECT_TYPE_TRANSPORT && !gInfo->transport.pause);
 }
 
@@ -1428,7 +1432,7 @@ void GameObject::Use(Unit* user)
                 if (info->summoningRitual.casterTargetSpell && info->summoningRitual.casterTargetSpell != 1) // No idea why this field is a bool in some cases
                     for (uint32 i = 0; i < info->summoningRitual.casterTargetSpellTargets; i++)
                         // m_unique_users can contain only player GUIDs
-                        if (Player* target = ObjectAccessor::GetPlayer(*this, SelectRandomContainerElement(m_unique_users)))
+                        if (Player* target = ObjectAccessor::GetPlayer(*this, Trinity::Containers::SelectRandomContainerElement(m_unique_users)))
                             spellCaster->CastSpell(target, info->summoningRitual.casterTargetSpell, true);
 
                 // finish owners spell
@@ -1821,6 +1825,7 @@ void GameObject::SetDestructibleState(GameObjectDestructibleState state, Player*
                 m_goValue->Building.Health = m_goValue->Building.MaxHealth;
                 SetGoAnimProgress(255);
             }
+            EnableCollision(true);
             break;
         case GO_DESTRUCTIBLE_DAMAGED:
         {
@@ -1877,6 +1882,7 @@ void GameObject::SetDestructibleState(GameObjectDestructibleState state, Player*
                 m_goValue->Building.Health = 0;
                 SetGoAnimProgress(0);
             }
+            EnableCollision(false);
             break;
         }
         case GO_DESTRUCTIBLE_REBUILDING:
@@ -1896,6 +1902,7 @@ void GameObject::SetDestructibleState(GameObjectDestructibleState state, Player*
                 m_goValue->Building.Health = m_goValue->Building.MaxHealth;
                 SetGoAnimProgress(255);
             }
+            EnableCollision(true);
             break;
         }
     }
