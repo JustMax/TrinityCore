@@ -28,11 +28,7 @@ TODO:
 - Look over how threat should be treaten (apparently there's a creature (entry 40151) that keeps 200 threat on both Halion's)
 - See if corporeality code can be improved
 - Script adds and surrounding trash
-*/
-
-/*
-Info list
-- Twilight Halion seems to be spawned while Halion is spawned.
+- Update Texts
 */
 
 enum Texts
@@ -739,6 +735,7 @@ class npc_halion_controller : public CreatureScript
                                     {
                                         twilightHalion->CastSpell(halion, SPELL_TWILIGHT_MENDING);
 
+                                        // TODO: I bet this is wrong
                                         Map::PlayerList const &PlList = me->GetMap()->GetPlayers();
                                         for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
                                             if (Player* player = i->getSource())
@@ -1145,11 +1142,6 @@ class npc_combat_stalker : public CreatureScript
                 me->setActive(true);
             }
 
-            void Reset()
-            {
-                ScriptedAI::Reset();
-            }
-
             void EnterCombat(Unit* who)
             {
                 DoZoneInCombat();
@@ -1426,15 +1418,6 @@ class spell_halion_mark_of_combustion : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
 
-                if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_ENEMY_SPELL) // Purged
-                    target->RemoveAurasDueToSpell(SPELL_FIERY_COMBUSTION, 0, 0, AURA_REMOVE_BY_ENEMY_SPELL);
-
-                //! Don't process if the aura is not considered expired.
-                //! The hook will still be called upon dispelling Soul Consumption because
-                //! it causes Mark of Combustion to be considered removed by expire.
-                //! It will also be called upon purging the mark, but purging it will
-                //! trigger Fiery Conbustion's dispel.
-                //! Note: This is really fubarish, we need something simpler.
                 if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
                     return;
 
@@ -1485,15 +1468,6 @@ class spell_halion_mark_of_consumption : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
 
-                if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_ENEMY_SPELL) // Purged
-                    target->RemoveAurasDueToSpell(SPELL_SOUL_CONSUMPTION, 0, 0, AURA_REMOVE_BY_ENEMY_SPELL);
-
-                //! Don't process if the aura is not considered expired.
-                //! The hook will still be called upon dispelling Soul Consumption because
-                //! it causes Mark of Consumption to be considered removed by expire.
-                //! It will also be called upon purging the mark, but purging it will
-                //! trigger Soul Consumption's dispel.
-                //! Note: This is really fubarish, we need something simpler.
                 if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
                     return;
 
