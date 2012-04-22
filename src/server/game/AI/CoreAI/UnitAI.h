@@ -232,10 +232,9 @@ class UnitAI
         virtual void DamageDealt(Unit* /*victim*/, uint32& /*damage*/, DamageEffectType /*damageType*/) { }
 
         // Called at any Damage from any attacker (before damage apply)
-        // Note: it for recalculation damage or special reaction at damage
-        // for attack reaction use AttackedBy called for not DOT damage in Unit::DealDamage also
-        virtual void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) {}
-        virtual void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/, SpellInfo const* /*spellProto*/) {}
+        // Can be used for recalculating damage or control special reaction on damage taken
+        // Note: spellInfo can be null
+        virtual void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/, SpellInfo const* /*spellInfo*/) {}
 
         // Called when the creature receives heal
         virtual void HealReceived(Unit* /*done_by*/, uint32& /*addhealth*/) {}

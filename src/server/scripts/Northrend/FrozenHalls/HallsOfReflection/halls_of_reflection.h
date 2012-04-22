@@ -96,7 +96,7 @@ struct boss_horAI : ScriptedAI
         me->SetReactState(REACT_PASSIVE);
     }
 
-    void DamageTaken(Unit* /*who*/, uint32 &uiDamage)
+    void DamageTaken(Unit* /*who*/, uint32 &uiDamage, SpellInfo const* /*spellInfo*/)
     {
         if (me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE))
             uiDamage = 0;
