@@ -286,19 +286,8 @@ class boss_halion : public CreatureScript
 
             Position const* GetMeteorStrikePosition() const { return &_meteorStrikePos; }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& damage, SpellInfo const* spellProto)
+            void DamageTaken(Unit* /*attacker*/, uint32& damage, SpellInfo const* spellInfo)
             {
-                if ((me->GetHealth() - damage) > 0 && (events.GetPhaseMask() & (PHASE_ONE_MASK | PHASE_THREE_MASK)) && spellProto->Id != SPELL_COPY_DAMAGE)
-                {
-                    if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_TWILIGHT_HALION)))
-                    {
-                        SpellNonMeleeDamage damageInfo(me, twilightHalion, SPELL_COPY_DAMAGE, spellProto->SchoolMask);
-                        damageInfo.damage = damage;
-                        me->SendSpellNonMeleeDamageLog(&damageInfo);
-                        me->DealSpellDamage(&damageInfo, false);
-                    }
-                }
-
                 if (me->HealthBelowPctDamaged(75, damage) && (events.GetPhaseMask() & PHASE_ONE_MASK))
                 {
                     events.SetPhase(PHASE_TWO);
@@ -311,11 +300,27 @@ class boss_halion : public CreatureScript
                     DoCast(me, SPELL_TWILIGHT_PHASING);
                     if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                         controller->AI()->DoAction(ACTION_PHASE_TWO);
+
+                    return;
                 }
 
-                if ((events.GetPhaseMask() & PHASE_THREE_MASK) && spellProto->Id != SPELL_COPY_DAMAGE)
-                    if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
-                        controller->AI()->SetData(DATA_MATERIAL_DAMAGE_TAKEN, damage);
+                if (spellInfo && spellInfo->Id != SPELL_COPY_DAMAGE)
+                {
+                    if ((me->GetHealth() - damage) > 0 && (events.GetPhaseMask() & (PHASE_ONE_MASK | PHASE_THREE_MASK)))
+                    {
+                        if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_TWILIGHT_HALION)))
+                        {
+                            SpellNonMeleeDamage damageInfo(me, twilightHalion, SPELL_COPY_DAMAGE, spellInfo->SchoolMask);
+                            damageInfo.damage = damage;
+                            me->SendSpellNonMeleeDamageLog(&damageInfo);
+                            me->DealSpellDamage(&damageInfo, false);
+                        }
+                    }
+
+                    if ((events.GetPhaseMask() & PHASE_THREE_MASK))
+                        if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
+                            controller->AI()->SetData(DATA_MATERIAL_DAMAGE_TAKEN, damage);
+                }
             }
 
             bool CanAIAttack(Unit const* victim) { return !victim->HasAura(SPELL_TWILIGHT_REALM); }
@@ -484,19 +489,8 @@ class boss_twilight_halion : public CreatureScript
                 ScriptedAI::JustReachedHome();
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& damage, SpellInfo const* spellProto)
+            void DamageTaken(Unit* /*attacker*/, uint32& damage, SpellInfo const* spellInfo)
             {
-                if (me->GetHealth() - damage > 0 && !(events.GetPhaseMask() & PHASE_ONE_MASK) && spellProto->Id != SPELL_COPY_DAMAGE)
-                {
-                    if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
-                    {
-                        SpellNonMeleeDamage damageInfo(me, halion, SPELL_COPY_DAMAGE, spellProto->SchoolMask);
-                        damageInfo.damage = damage;
-                        me->SendSpellNonMeleeDamageLog(&damageInfo);
-                        me->DealSpellDamage(&damageInfo, false);
-                    }
-                }
-
                 if (me->HealthBelowPctDamaged(50, damage) && (events.GetPhaseMask() & PHASE_TWO_MASK))
                 {
                     events.SetPhase(PHASE_THREE);
@@ -505,14 +499,26 @@ class boss_twilight_halion : public CreatureScript
                     me->CastStop();
                     DoCast(me, SPELL_TWILIGHT_DIVISION);
                     Talk(SAY_PHASE_THREE);
-                    //! Stop here, else damage that triggered the phase change will be taken
-                    //! into consideration in the next lines.
                     return;
                 }
 
-                if ((events.GetPhaseMask() & PHASE_THREE_MASK) && spellProto->Id != SPELL_COPY_DAMAGE)
-                    if (Creature* controller = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION_CONTROLLER)))
-                        controller->AI()->SetData(DATA_TWILIGHT_DAMAGE_TAKEN, damage);
+                if (spellInfo && spellInfo->Id != SPELL_COPY_DAMAGE)
+                {
+                    if ((me->GetHealth() - damage) > 0 && !(events.GetPhaseMask() & PHASE_ONE_MASK))
+                    {
+                        if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
+                        {
+                            SpellNonMeleeDamage damageInfo(me, halion, SPELL_COPY_DAMAGE, spellInfo->SchoolMask);
+                            damageInfo.damage = damage;
+                            me->SendSpellNonMeleeDamageLog(&damageInfo);
+                            me->DealSpellDamage(&damageInfo, false);
+                        }
+                    }
+
+                    if ((events.GetPhaseMask() & PHASE_THREE_MASK))
+                        if (Creature* controller = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION_CONTROLLER)))
+                            controller->AI()->SetData(DATA_TWILIGHT_DAMAGE_TAKEN, damage);
+                }
             }
 
             void SpellHitTarget(Unit* /*who*/, SpellInfo const* spell)
