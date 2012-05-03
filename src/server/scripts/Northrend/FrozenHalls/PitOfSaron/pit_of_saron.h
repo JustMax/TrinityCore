@@ -84,7 +84,10 @@ enum CreatureIds
     NPC_FORGEMASTER_STALKER                     = 36495,
     NPC_EXPLODING_ORB                           = 36610,
     NPC_YMIRJAR_DEATHBRINGER                    = 36892,
-    NPC_ICY_BLAST                               = 36731
+    NPC_ICY_BLAST                               = 36731,
+
+    NPC_COLLAPSING_ICICLE                       = 36847,
+    NPC_INVISIBLE_STALKER_ALL_PHASES            = 32780
 };
 
 enum GameObjectIds
