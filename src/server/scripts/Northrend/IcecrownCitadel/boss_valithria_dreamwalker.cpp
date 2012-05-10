@@ -680,6 +680,8 @@ class npc_risen_archmage : public CreatureScript
             npc_risen_archmageAI(Creature* creature) : ScriptedAI(creature),
                 _instance(creature->GetInstanceScript())
             {
+                // Do not aggro on LoSing.
+                me->SetReactState(REACT_PASSIVE);
             }
 
             bool CanAIAttack(Unit const* target) const

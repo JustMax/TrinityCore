@@ -46,12 +46,6 @@ enum Events
     EVENT_SHOVELLED             = 5,
 };
 
-enum Actions
-{
-    // Invisible Stalker (All phases)
-    ACTION_COLLAPSE_ICICLE      = 1,
-};
-
 class mob_ymirjar_flamebearer : public CreatureScript
 {
     public:
@@ -294,27 +288,15 @@ class npc_invisible_stalker_all_phases_pos : public CreatureScript
         struct npc_invisible_stalker_all_phases_posAI: public ScriptedAI
         {
             npc_invisible_stalker_all_phases_posAI(Creature* creature) : ScriptedAI(creature)
-            {
-            }
+            { }
 
-            void DoAction(int32 const action)
+            void MoveInLineOfSight(Unit* mover)
             {
-                if (action != ACTION_COLLAPSE_ICICLE)
+                if (!me->IsWithinDist(mover, 3.0f) && me->isAlive())
                     return;
 
-                me->CastSpell(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ() + 0.01f, SPELL_SUMMON_ICICLE, true);
-            }
-
-            void JustSummoned(Creature* summon)
-            {
-                if (summon->GetEntry() != NPC_COLLAPSING_ICICLE)
-                    return;
-
-                // TRIGGERED_IGNORE_AURA_INTERRUPT_FLAGS | TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD
-                summon->CastSpell(summon, SPELL_ICICLE_VISUAL, true);
-                summon->CastSpell(summon, SPELL_ICICLE_DAMAGE_TRIGGER, true);
-                if (summon->IsAIEnabled)
-                    summon->AI()->SetGUID(me->GetGUID());
+                me->CastSpell(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), SPELL_SUMMON_ICICLE, true);
+                me->DespawnOrUnsummon();
             }
         };
 
@@ -331,23 +313,12 @@ class npc_collapsing_icicle : public CreatureScript
 
         struct npc_collapsing_icicleAI: public ScriptedAI
         {
-            npc_collapsing_icicleAI(Creature* creature) : ScriptedAI(creature),
-                _summonerGUID(0)
+            npc_collapsing_icicleAI(Creature* creature) : ScriptedAI(creature)
             {
+                // TRIGGERED_IGNORE_AURA_INTERRUPT_FLAGS | TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD from retail
+                DoCast(me, SPELL_ICICLE_VISUAL, true);
+                DoCast(me, SPELL_ICICLE_DAMAGE_TRIGGER, true);
             }
-
-            uint64 GetGuid(int32 /*id*/)
-            {
-                return _summonerGUID;
-            }
-
-            void SetGUID(uint64 guid, int32 /*type*/)
-            {
-                _summonerGUID = guid;
-            }
-
-        private:
-            uint64 _summonerGUID;
         };
 
         CreatureAI* GetAI(Creature* creature) const
@@ -387,78 +358,6 @@ class spell_trash_mob_glacial_strike : public SpellScriptLoader
         }
 };
 
-class spell_icicle_damage_trigger : public SpellScriptLoader
-{
-    public:
-        spell_icicle_damage_trigger() : SpellScriptLoader("spell_icicle_damage_trigger") { }
-
-        class spell_icicle_damage_trigger_SpellScript : public SpellScript
-        {
-            PrepareSpellScript(spell_icicle_damage_trigger_SpellScript);
-
-            void HandleDummy(SpellEffIndex effIndex)
-            {
-                Unit* hitUnit = GetHitUnit();
-                if (hitUnit->IsAIEnabled)
-                    if (Creature* stalker = ObjectAccessor::GetCreature(*hitUnit, hitUnit->GetAI()->GetGUID()))
-                        stalker->DespawnOrUnsummon();
-            }
-
-            void Register()
-            {
-                OnEffectHitTarget += SpellEffectFn(spell_icicle_damage_trigger_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
-            }
-        };
-
-        SpellScript* GetSpellScript() const
-        {
-            return new spell_icicle_damage_trigger_SpellScript();
-        }
-};
-
-class StalkersSearcher
-{
-    public:
-        StalkersSearcher(Position pos, float maxRange) : _sourcePos(pos), _range(maxRange) {}
-        bool operator() (Unit* unit)
-        {
-            return (unit->GetEntry() == NPC_INVISIBLE_STALKER_ALL_PHASES && unit->isAlive() && unit->IsInDist(&_sourcePos, _range));
-        }
-
-    private:
-        const Position _sourcePos;
-        float _range;
-};
-
-class AreaTrigger_at_icicle_trigger : public AreaTriggerScript
-{
-    public:
-        AreaTrigger_at_icicle_trigger() : AreaTriggerScript("AreaTrigger_at_icicle_trigger")
-        {
-        }
-
-        bool OnTrigger(Player* player, AreaTriggerEntry const* trigger)
-        {
-            std::list<Creature*> stalkers;
-            Position triggerPos = { trigger->x, trigger->y, trigger->z, 0.f };
-
-            StalkersSearcher check = StalkersSearcher(triggerPos, trigger->radius);
-            Trinity::CreatureListSearcher<StalkersSearcher> searcher(player, stalkers, check);
-            // Search around the player in the trigger's diameter range since the player may not be at the exact trigger spot.
-            player->VisitNearbyGridObject(float(trigger->radius * 2), searcher);
-
-            if (Creature* stalker = Trinity::Containers::SelectRandomContainerElement(stalkers))
-            {
-                stalkers.remove(stalker);
-                if (stalker->IsAIEnabled)
-                    stalker->GetAI()->DoAction(ACTION_COLLAPSE_ICICLE);
-            }
-
-            for (std::list<Creature*>::const_iterator itr = stalkers.begin(); itr != stalkers.end(); ++itr)
-                (*itr)->DespawnOrUnsummon();
-            return false;
-        }
-};
 
 void AddSC_pit_of_saron()
 {
@@ -469,6 +368,4 @@ void AddSC_pit_of_saron()
     new npc_invisible_stalker_all_phases_pos();
     new npc_collapsing_icicle();
     new spell_trash_mob_glacial_strike();
-    new spell_icicle_damage_trigger();
-    new AreaTrigger_at_icicle_trigger();
 }
