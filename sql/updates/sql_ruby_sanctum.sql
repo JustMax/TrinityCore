@@ -23,8 +23,8 @@ UPDATE `creature` SET `spawntimesecs`=604800 WHERE `id` IN (39751,39746,39747);
 UPDATE `creature` SET `spawntimesecs`=1209600 WHERE `map`=724 AND `id` NOT IN (39751,39746,39747);
 
 -- Difficulty entries
-UPDATE `creature_template` SET `difficulty_entry_1`=40143,`difficulty_entry_2`=40144,`difficulty_entry_3`=40145 WHERE `entry`=40142;
-UPDATE `creature_template` SET `difficulty_entry_1`=40470,`difficulty_entry_2`=40471,`difficulty_entry_3`=40472 WHERE `entry`=40081;
+UPDATE `creature_template` SET `difficulty_entry_1`=40143, `difficulty_entry_2`=40144, `difficulty_entry_3`=40145 WHERE `entry`=40142;
+UPDATE `creature_template` SET `difficulty_entry_1`=40470, `difficulty_entry_2`=40471, `difficulty_entry_3`=40472 WHERE `entry`=40081;
 
 -- ---------------------------------------------------------------- --
 -- ----------------------- Template updates ----------------------- --
@@ -52,7 +52,7 @@ UPDATE `creature_template` SET `faction_A`=14,`faction_H`=14,`exp`=2,`mindmg`=50
 UPDATE `creature_template` SET `faction_A`=14,`faction_H`=14,`exp`=2,`mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35 WHERE `entry`=40145; -- 40145 - Halion (3) - The Twilight Destroyer
 
 -- 40091 - Orb Rotation Focus
-UPDATE `creature_template` SET `modelid1`=11686,`modelid2`=169,`scale`=1,`unit_flags`=33554688 WHERE `entry`=40091;
+UPDATE `creature_template` SET `modelid1`=11686, `modelid2`=169, `scale`=1, `unit_flags`=33554688 WHERE `entry`=40091;
 
 UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=718,`unit_flags`=33554688 WHERE `entry`=40081; -- 40081 - Orb Carrier 
 UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=718,`unit_flags`=33554688 WHERE `entry`=40470; -- 40470 - Orb Carrier (1)
@@ -149,12 +149,12 @@ INSERT INTO `creature_text` (`entry`,`groupid`,`id`,`text`,`type`,`language`,`pr
 (40083,0,0, 'The orbiting spheres pulse with dark energy!',41,0,100,0,0,0, 'Shadow Orb');
 
 -- Spawns
-SET @OGUID = X; -- Set guid (1 required)
+SET @OGUID = 850000; -- Set guid (1 required)
 DELETE FROM `gameobject` WHERE `id`=203624;
 INSERT INTO `gameobject` (`guid`,`id`,`map`,`spawnMask`,`phaseMask`,`position_x`,`position_y`,`position_z`,`orientation`,`rotation0`,`rotation1`,`rotation2`,`rotation3`,`spawntimesecs`,`animprogress`,`state`) VALUES
 (@OGUID,203624,724,15,0x20,3157.372,533.9948,72.8887,1.034892,0,0,0.4946623,0.8690853,120,0,0); -- GO_TWILIGHT_FLAME_RING
 
-SET @GUID = X; -- Set guid (3 required)
+SET @GUID = 850000; -- Set guid (3 required)
 DELETE FROM `creature` WHERE `id` IN (40081,40091); -- ,40151);
 INSERT INTO `creature` (`guid`,`id`,`map`,`spawnMask`,`phaseMask`,`modelid`,`equipment_id`,`position_x`,`position_y`,`position_z`,`orientation`,`spawntimesecs`,`spawndist`,`currentwaypoint`,`curhealth`,`curmana`,`MovementType`,`npcflag`,`unit_flags`,`dynamicflags`) VALUES
 (@GUID,40091,724,1,0x20,0,0,3113.711,533.5382,72.96869,1.936719,300,0,0,1,0,0,0,0,0), -- Orb Rotation Focus
@@ -206,10 +206,10 @@ INSERT INTO `vehicle_template_accessory` (`entry`,`accessory_entry`,`seat_id`,`m
 -- Vehicle spellclicks
 DELETE FROM `npc_spellclick_spells` WHERE `npc_entry` IN (40081,40470,40471,40472);
 INSERT INTO `npc_spellclick_spells` (`npc_entry`,`spell_id`,`cast_flags`,`user_type`) VALUES
-(40081,46598,0,1), -- Ride Vehicle Hardcoded
-(40470,46598,0,1),
-(40471,46598,0,1),
-(40472,46598,0,1);
+(40081, 46598, 0, 1), -- Ride Vehicle Hardcoded
+(40470, 46598, 0, 1),
+(40471, 46598, 0, 1),
+(40472, 46598, 0, 1);
 
 -- Conditions
 DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=13 AND `SourceEntry`=74758;
@@ -222,3 +222,18 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 (13,3,75509,0,0,31,0,3,39863,0,0,0, "", "Twilight Mending can only target Halion"),
 (13,1,74758,0,0,31,0,3,40091,0,0,0, "", "Track Rotation can only target Orb Rotation Focus");
 
+-- All the SQL updates here are from sniff
+
+UPDATE `creature_template` SET `speed_walk`=1.6, `speed_run`=1.42857146263123, `minlevel`=83, `maxlevel`=83, `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x88840, `BaseAttackTime`=1800, `DynamicFlags`=0xC WHERE `entry`=40142;
+UPDATE `creature_template` SET `speed_walk`=1.6, `speed_run`=1.42857146263123, `minlevel`=83, `maxlevel`=83, `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x8040, `BaseAttackTime`=1500 WHERE `entry`=39863;
+UPDATE `creature_template` SET `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x2000000, `Class`=2 WHERE `entry`=40029;
+UPDATE `creature_template` SET `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x2000000, WHERE `entry`=40001;
+UPDATE `creature_template` SET `InhabitType`=0x4, `speed_walk`=1.2, `speed_run`=0.428571432828903, `VehicleId`=718, `minlevel`=80, `maxlevel`=80, `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x2000100 WHERE `entry`=40081;
+
+DELETE FROM `creature_template_addon` WHERE `entry` IN(40142, 40146, 40001, 40135, 40100);
+INSERT INTO `creature_template_addon` (`entry`, `mount`, `bytes1`, `bytes2`, `auras`) VALUES
+(40142, 0, 0x0, 0x1, '75476'),
+(40146, 0, 0x0, 0x1, ''),
+(40001, 0, 0x0, 0x1, '74629'),
+(40135, 0, 0x0, 0x1, '74803'),
+(40100, 0, 0x2000000, 0x1, '');
