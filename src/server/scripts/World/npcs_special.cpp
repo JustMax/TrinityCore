@@ -2104,7 +2104,7 @@ class npc_shadowfiend : public CreatureScript
         {
             npc_shadowfiendAI(Creature* creature) : ScriptedAI(creature) {}
 
-            void DamageTaken(Unit* /*killer*/, uint32& damage)
+            void DamageTaken(Unit* /*killer*/, uint32& damage, SpellInfo const* /*spellInfo*/)
             {
                 if (me->isSummon())
                     if (Unit* owner = me->ToTempSummon()->GetSummoner())
