@@ -1080,7 +1080,7 @@ class npc_orb_carrier : public CreatureScript
             npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature)
             {
                 ASSERT(creature->GetVehicleKit());
-                me->setActive(true);
+                // me->setActive(true);
             }
 
             void UpdateAI(uint32 const /*diff*/)
