@@ -1077,7 +1077,8 @@ class npc_orb_carrier : public CreatureScript
 
         struct npc_orb_carrierAI : public ScriptedAI
         {
-            npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature)
+            npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature),
+                _instance(creature->GetInstanceScript())
             {
                 ASSERT(creature->GetVehicleKit());
                 me->setActive(true);
@@ -1089,7 +1090,8 @@ class npc_orb_carrier : public CreatureScript
                 //! However, refreshing it looks bad, so just cast the spell if
                 //! we are not channeling it.
                 if (!me->HasUnitState(UNIT_STATE_CASTING))
-                    me->CastSpell((Unit*)NULL, SPELL_TRACK_ROTATION, false);
+                    if (Creature* rotationFocus = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_ORB_ROTATION_FOCUS)))
+                        me->CastSpell(rotationFocus, SPELL_TRACK_ROTATION, false);
             }
 
             void DoAction(int32 const action)
@@ -1126,6 +1128,9 @@ class npc_orb_carrier : public CreatureScript
                     }
                 }
             }
+
+            private:
+                InstanceScript* _instance;
         };
 
         CreatureAI* GetAI(Creature* creature) const

@@ -3530,6 +3530,9 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->manaCost = 0;
                 spellInfo->manaPerSecond = 0;
                 break;
+            case 74758: // Track Rotation (Temp hack until conditions system is fixed)
+                spellInfo->EffectImplicitTargetA[0] = TARGET_UNIT_TARGET_ANY;
+                break;
             default:
                 break;
         }
