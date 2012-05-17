@@ -11609,7 +11609,7 @@ bool Unit::IsImmunedToSpell(SpellInfo const* spellInfo)
 
 bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) const
 {
-    if (!spellInfo || !spellInfo->Effects[index])
+    if (!spellInfo || !spellInfo->Effects[index].IsEffect())
         return false;
     // If m_immuneToEffect type contain this effect type, IMMUNE effect.
     uint32 effect = spellInfo->Effects[index].Effect;
