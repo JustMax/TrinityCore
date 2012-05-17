@@ -7,17 +7,12 @@ INSERT INTO `spell_dbc` (`Id`,`Attributes`,`AttributesEx`,`AttributesEx2`,`Casti
 (70507,0x00000100,0x00000400,0x0,1,101,21,1,99,6,10,1,61,1, 'Halion - Combustion & Consumption Scale Aura');
 
 -- Copy damage spell
--- Attr1 0x8|0x80|0x400|0x10000
--- Attr2 0x20000000
--- Attr3 0x40000|0x20000000
--- Attr5 0x8|0x20000|0x40000
--- Attr6 0x2000|0x1000000|0x20000000
 DELETE FROM `spell_dbc` WHERE `id`=74810;
 INSERT INTO `spell_dbc` (`Id`,`Attributes`,`AttributesEx`,`AttributesEx2`,`AttributesEx3`,`AttributesEx4`,`AttributesEx5`,`AttributesEx6`,`AttributesEx7`,`CastingTimeIndex`,`Effect1`,`EffectImplicitTargetA1`,`MaxAffectedTargets`,`Comment`) VALUES
 (74810,0,0x00010488,0x20000000,0x2004000,0,0x00060008,0x21002000,0,1,3,25,1, 'Halion - Copy Damage');
 
 -- Bosses respawn time
-UPDATE `creature` SET `spawntimesecs`=604800 WHERE `id` IN (39751,39746,39747);
+UPDATE `creature` SET `spawntimesecs`=604800 WHERE `id` IN (39751, 39746, 39747);
 
 -- Trash mobs respawn time
 UPDATE `creature` SET `spawntimesecs`=1209600 WHERE `map`=724 AND `id` NOT IN (39751,39746,39747);
@@ -30,34 +25,49 @@ UPDATE `creature_template` SET `difficulty_entry_1`=40470, `difficulty_entry_2`=
 -- ----------------------- Template updates ----------------------- --
 -- ---------------------------------------------------------------- --
 
-UPDATE `creature_template` SET `flags_extra`=130,`ScriptName`= 'npc_halion_controller', `faction_A`=35,`faction_H`=35,`exp`=2 WHERE `entry`=40146; -- 40146 - Halion Controller
-
 -- Halion
-UPDATE `creature_template` SET `mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35,`faction_A`=14,`faction_H`=14, `exp`=2 WHERE `entry` IN (39863,39864,39944,39945,40142);
+UPDATE `creature_template` SET
+    `mindmg`=509,
+    `maxdmg`=683,
+    `attackpower`=805,
+    `dmg_multiplier`=35,
+    `faction_A`=14,
+    `faction_H`=14,
+    `exp`=2
+WHERE `entry` IN (39863, 39864, 39944, 39945, 40142);
 UPDATE `creature_template` SET `ScriptName`= 'boss_halion',`flags_extra`=`flags_extra`|0x1 WHERE `entry`=39863;
 
 -- Trash mobs
-UPDATE `creature_template` SET `mindmg`=422,`maxdmg`=586,`attackpower`=642,`dmg_multiplier`=7.5 WHERE `entry` IN (40417,40418,40419,40420,40421,40422,40423,40424);
+UPDATE `creature_template` SET
+    `mindmg`=422,
+    `maxdmg`=586,
+    `attackpower`=642,
+    `dmg_multiplier`=7.5
+WHERE `entry` IN (40417, 40418, 40419, 40420, 40421, 40422, 40423, 40424);
 
 -- Pre bosses
-UPDATE `creature_template` SET `mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35 WHERE `entry` IN (39751,39920,39747,39823,39746,39805);
+UPDATE `creature_template` SET
+    `mindmg`=509,
+    `maxdmg`=683,
+    `attackpower`=805,
+    `dmg_multiplier`=35
+WHERE `entry` IN (39751, 39920, 39747, 39823, 39746, 39805);
 
 UPDATE `creature_template` SET `flags_extra`=130 WHERE `entry` IN (40041, 40042, 40043, 40044); -- 40041, 40042, 40043 & 40044 - Meteor Strike
 UPDATE `creature_template` SET `flags_extra`=130 WHERE `entry`=40029; -- 40029 - Meteor Strike (Initial)
 UPDATE `creature_template` SET `flags_extra`=130 WHERE `entry`=40055; -- 40055 - Meteor Strike
 
-UPDATE `creature_template` SET `faction_A`=14,`faction_H`=14,`exp`=2,`mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35 WHERE `entry`=40142; -- 40142 - Halion     - The Twilight Destroyer
 UPDATE `creature_template` SET `faction_A`=14,`faction_H`=14,`exp`=2,`mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35 WHERE `entry`=40143; -- 40143 - Halion (1) - The Twilight Destroyer
 UPDATE `creature_template` SET `faction_A`=14,`faction_H`=14,`exp`=2,`mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35 WHERE `entry`=40144; -- 40144 - Halion (2) - The Twilight Destroyer
 UPDATE `creature_template` SET `faction_A`=14,`faction_H`=14,`exp`=2,`mindmg`=509,`maxdmg`=683,`attackpower`=805,`dmg_multiplier`=35 WHERE `entry`=40145; -- 40145 - Halion (3) - The Twilight Destroyer
 
 -- 40091 - Orb Rotation Focus
-UPDATE `creature_template` SET `modelid1`=11686, `modelid2`=169, `scale`=1, `unit_flags`=33554688 WHERE `entry`=40091;
+UPDATE `creature_template` SET `modelid1`=11686, `modelid2`=169, `scale`=1, `unit_flags`=0x2000100 WHERE `entry`=40091;
 
-UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=718,`unit_flags`=33554688 WHERE `entry`=40081; -- 40081 - Orb Carrier 
-UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=718,`unit_flags`=33554688 WHERE `entry`=40470; -- 40470 - Orb Carrier (1)
-UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=746,`unit_flags`=33554688 WHERE `entry`=40471; -- 40471 - Orb Carrier (2)
-UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=746,`unit_flags`=33554688 WHERE `entry`=40472; -- 40472 - Orb Carrier (3)
+UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=718,`unit_flags`=0x2000100 WHERE `entry`=40081; -- 40081 - Orb Carrier 
+UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=718,`unit_flags`=0x2000100 WHERE `entry`=40470; -- 40470 - Orb Carrier (1)
+UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=746,`unit_flags`=0x2000100 WHERE `entry`=40471; -- 40471 - Orb Carrier (2)
+UPDATE `creature_template` SET `InhabitType`=7,`modelid1`=11686,`modelid2`=169,`VehicleId`=746,`unit_flags`=0x2000100 WHERE `entry`=40472; -- 40472 - Orb Carrier (3)
 UPDATE `creature_template` SET `scale`=1,`flags_extra`=130,`exp`=2,`baseattacktime`=2000,`unit_flags`=33554432 WHERE `entry` IN(40001, 40135); -- 40001 & 40135 - Combustion & Consumption
 
 -- 40469, 40468, 40083 & 40100 - Shadow Orb
@@ -76,17 +86,6 @@ UPDATE `creature_template` SET `ScriptName`= 'npc_meteor_strike' WHERE `entry` I
 UPDATE `creature_model_info` SET `bounding_radius`=1, `combat_reach`=2 WHERE `modelid`=16946;
 UPDATE `creature_model_info` SET `combat_reach`=18 WHERE `modelid`=31952;
 UPDATE `creature_model_info` SET `combat_reach`=12.25 WHERE `modelid`=32179;
-
--- Template addon updates
-DELETE FROM `creature_template_addon` WHERE `entry` IN (39863,40142,40469,40468,40083,40100,40091);
-INSERT INTO `creature_template_addon` (`entry`,`mount`,`bytes1`,`bytes2`,`auras`) VALUES
-(40142,0,0x0,0x1, '75476'),  -- Twilight Halion - Dusk Shroud
-(39863,0,0x0,0x1, '78243'),  -- Halion: Twilight Precision
-(40469,0,0x2000000,0x1, ''), -- Shadow Orb
-(40468,0,0x2000000,0x1, ''), -- Shadow Orb
-(40083,0,0x2000000,0x1, ''), -- Shadow Orb
-(40100,0,0x2000000,0x1, ''), -- Shadow Orb
-(40091,0,0x0,0x1, '');       -- Orb Rotation Focus
 
 -- Spell 75074 cannot be found in any DBC file and is not found in sniffs.
 -- thus leaving us with no other choice than editing a WDB field (kids, do not try this at home)
@@ -224,16 +223,76 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 
 -- All the SQL updates here are from sniff
 
-UPDATE `creature_template` SET `speed_walk`=1.6, `speed_run`=1.42857146263123, `minlevel`=83, `maxlevel`=83, `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x88840, `BaseAttackTime`=1800, `DynamicFlags`=0xC WHERE `entry`=40142;
-UPDATE `creature_template` SET `speed_walk`=1.6, `speed_run`=1.42857146263123, `minlevel`=83, `maxlevel`=83, `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x8040, `BaseAttackTime`=1500 WHERE `entry`=39863;
-UPDATE `creature_template` SET `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x2000000, `Class`=2 WHERE `entry`=40029;
-UPDATE `creature_template` SET `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x2000000, WHERE `entry`=40001;
-UPDATE `creature_template` SET `InhabitType`=0x4, `speed_walk`=1.2, `speed_run`=0.428571432828903, `VehicleId`=718, `minlevel`=80, `maxlevel`=80, `Faction_H`=14, `Faction_A`=14, `UnitFlags`=0x2000100 WHERE `entry`=40081;
+UPDATE `creature_template` SET
+    `speed_walk`=1.6,
+    `speed_run`=1.42857146263123,
+    `minlevel`=83, `maxlevel`=83,
+    `faction_H`=14, `faction_A`=14,
+    `unit_flags`=0x88840,
+    `BaseAttackTime`=1800,
+    `DynamicFlags`=0xC
+WHERE `entry`=40142; -- Twilight Halion
 
-DELETE FROM `creature_template_addon` WHERE `entry` IN(40142, 40146, 40001, 40135, 40100);
+UPDATE `creature_template` SET
+    `speed_walk`=1.6,
+    `speed_run`=1.42857146263123,
+    `minlevel`=83, `maxlevel`=83,
+    `faction_H`=14, `faction_A`=14,
+    `unit_flags`=0x8040,
+    `BaseAttackTime`=1500
+WHERE `entry`=39863; -- Material Halion
+
+UPDATE `creature_template` SET
+    `Faction_H`=14, `Faction_A`=14,
+    `unit_flags`=0x2000000,
+    `Unit_Class`=2
+WHERE `entry`=40029; -- Meteor Strike
+
+UPDATE `creature_template` SET
+    `Faction_H`=14, `Faction_A`=14,
+    `unit_flags`=0x2000000
+WHERE `entry`=40001; -- Combustion
+
+UPDATE `creature_template` SET
+    `InhabitType`=0x4,
+    `speed_walk`=1.2,
+    `speed_run`=0.428571432828903,
+    `VehicleId`=718,
+    `minlevel`=80, `maxlevel`=80,
+    `Faction_H`=14, `Faction_A`=14,
+    `unit_flags`=0x2000100
+WHERE `entry`=40081; -- Orb Carrier
+
+UPDATE `creature_template` SET
+    `speed_walk`=2.2,
+    `speed_run`=0.785714268684387,
+    `minlevel`=80, `maxlevel`=80,
+    `faction_H`=14, `faction_A`=14,
+    `unit_flags`=0x2000100
+WHERE `entry`=40091; -- Orb Rotation Focus
+
+UPDATE `creature_template` SET
+    `flags_extra`=130,
+    `ScriptName`= 'npc_halion_controller',
+    `exp`=2,
+    `speed_walk`=2.8,
+    `speed_run`=1,
+    `minlevel`=80,
+    `maxlevel`=80,
+    `faction_A`=14,
+    `faction_H`=14,
+    `unit_flags`=0x2000100
+WHERE `entry`=40146; -- 40146 - Halion Controller
+
+DELETE FROM `creature_template_addon` WHERE `entry` IN (40142, 40146, 40001, 40135, 40100, 40469, 40468, 40083, 39863, 40091);
 INSERT INTO `creature_template_addon` (`entry`, `mount`, `bytes1`, `bytes2`, `auras`) VALUES
 (40142, 0, 0x0, 0x1, '75476'),
 (40146, 0, 0x0, 0x1, ''),
 (40001, 0, 0x0, 0x1, '74629'),
 (40135, 0, 0x0, 0x1, '74803'),
-(40100, 0, 0x2000000, 0x1, '');
+(40469, 0, 0x2000000, 0x1, ''),
+(40468, 0, 0x2000000, 0x1, ''),
+(40083, 0, 0x2000000, 0x1, ''),
+(40100, 0, 0x2000000, 0x1, ''),
+(39863, 0, 0x0, 0x1, '78243'),
+(40091, 0, 0x0, 0x1, '');
