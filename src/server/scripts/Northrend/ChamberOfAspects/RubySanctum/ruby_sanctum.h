@@ -139,4 +139,14 @@ CreatureAI* GetRubySanctumAI(Creature* creature)
     return NULL;
 }
 
+GameObjectAI* GetRubySanctumAI(GameObject* go)
+{
+    if (InstanceMap* instance = go->GetMap()->ToInstanceMap())
+        if (instance->GetInstanceScript())
+            if (instance->GetScriptId() == sObjectMgr->GetScriptId(RSScriptName))
+                return new AI(go);
+
+    return NULL;
+}
+
 #endif // RUBY_SANCTUM_H_
