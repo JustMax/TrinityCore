@@ -139,6 +139,7 @@ CreatureAI* GetRubySanctumAI(Creature* creature)
     return NULL;
 }
 
+template<class AI>
 GameObjectAI* GetRubySanctumAI(GameObject* go)
 {
     if (InstanceMap* instance = go->GetMap()->ToInstanceMap())
