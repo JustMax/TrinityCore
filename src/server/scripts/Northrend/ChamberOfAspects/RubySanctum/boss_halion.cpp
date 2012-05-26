@@ -220,7 +220,6 @@ class boss_halion : public CreatureScript
 
             void Reset()
             {
-                _isInCombat = false;
                 events.Reset();
                 events.SetPhase(PHASE_ONE);
                 me->SetReactState(REACT_DEFENSIVE);
@@ -233,7 +232,6 @@ class boss_halion : public CreatureScript
 
             void EnterCombat(Unit* /*who*/)
             {
-                _isInCombat = true;
                 Talk(SAY_AGGRO);
 
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 1);
@@ -308,7 +306,8 @@ class boss_halion : public CreatureScript
 
             void UpdateAI(uint32 const diff)
             {
-                CheckCombatState();
+                if (!CheckCombatState())
+                    return;
 
                 // The Physical Halion won't do anything on phase two.
                 if (events.GetPhaseMask() & PHASE_TWO_MASK)
@@ -391,8 +390,6 @@ class boss_halion : public CreatureScript
         private:
             Position _meteorStrikePos;
 
-            bool _isInCombat;
-
             bool DealDamageToTwilightHalion(uint32 schoolMask, uint32 damage)
             {
                 Creature* twilightHalion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_TWILIGHT_HALION));
@@ -406,22 +403,24 @@ class boss_halion : public CreatureScript
                 return true;
             }
 
-            void CheckCombatState()
+            bool CheckCombatState()
             {
-                if (_isInCombat) // In Combat
+                if (instance->GetBossState(DATA_HALION) == IN_PROGRESS) // In Combat
                 {
                     if (events.GetPhaseMask() & PHASE_ONE_MASK) // On phase one
                     {
                         if (!UpdateVictim()) // No victim
-                            return; // Do nothing
+                            return false; // Do nothing
                     }
                     else if (events.GetPhaseMask() & PHASE_THREE_MASK) // On phase three
                         if (!UpdateVictim() || !FindPossibleTargets()) // No victim, no possible target (causes evade)
-                            return; // Do nothing
+                            return false; // Do nothing
                 }
                 else // Not in combat
                     if (!UpdateVictim()) // No victim
-                        return; // Do nothing
+                        return false; // Do nothing
+
+                return true;
             }
 
             bool FindPossibleTargets()
@@ -470,7 +469,6 @@ class boss_twilight_halion : public CreatureScript
 
             void Reset()
             {
-                _isInCombat = false;
                 me->LoadCreaturesAddon(true);
                 events.Reset();
                 _instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
@@ -478,7 +476,6 @@ class boss_twilight_halion : public CreatureScript
 
             void EnterCombat(Unit* /*who*/)
             {
-                _isInCombat = true;
                 //! Hackfix: Force updating health.
                 if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION)))
                     if (halion->GetHealth() != me->GetHealth())
@@ -496,7 +493,6 @@ class boss_twilight_halion : public CreatureScript
 
             void JustDied(Unit* killer)
             {
-                _isInCombat = false;
                 if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION)))
                 {
                     // Ensure looting
@@ -548,7 +544,8 @@ class boss_twilight_halion : public CreatureScript
 
             void UpdateAI(uint32 const diff)
             {
-                CheckCombatState();
+                if (!CheckCombatState())
+                    return;
 
                 events.Update(diff);
 
@@ -621,7 +618,6 @@ class boss_twilight_halion : public CreatureScript
         private:
             InstanceScript* _instance;
             EventMap events;
-            bool _isInCombat;
 
             bool DealDamageToPhysicalHalion(uint32 schoolMask, uint32 damage)
             {
@@ -636,24 +632,26 @@ class boss_twilight_halion : public CreatureScript
                 return true;
             }
 
-            void CheckCombatState()
+            bool CheckCombatState()
             {
-                if (_isInCombat)
+                if (_instance->GetBossState(DATA_HALION) == IN_PROGRESS)
                 {
                     if (events.GetPhaseMask() & PHASE_ONE_MASK) // Phase one
                     {
                         if (!UpdateVictim()) // No victim
-                            return; // Do nothing
+                            return false; // Do nothing
                     }
                     else if (events.GetPhaseMask() & (PHASE_TWO_MASK|PHASE_THREE_MASK)) // Phase two or three
                     {
                         if (!UpdateVictim() || !FindPossibleTarget()) // No victim, no possible target (causes auto evade)
-                            return; // Do nothing
+                            return false; // Do nothing
                     }
                 }
                 else // Not in combat
                     if (!UpdateVictim()) // No victim
-                        return; // Do nothing
+                        return false; // Do nothing
+
+                return true;
             }
 
             bool FindPossibleTarget()
