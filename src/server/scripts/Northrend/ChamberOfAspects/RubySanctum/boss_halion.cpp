@@ -211,8 +211,7 @@ CorporealityEntry _corporealityReference[MAX_CORPOREALITY_STATE] = {
 
 struct generic_halionAI : public BossAI
 {
-    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId),
-        _bossId(bossId)
+    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId)
     {
     }
 
@@ -266,7 +265,7 @@ struct generic_halionAI : public BossAI
 
     bool CheckCombatState()
     {
-        if (instance->GetBossState(_bossId) == IN_PROGRESS)
+        if (instance->GetBossState(DATA_HALION) == IN_PROGRESS)
         {
             if (events.GetPhaseMask() & PHASE_ONE_MASK) // Phase one
             {
@@ -309,9 +308,6 @@ struct generic_halionAI : public BossAI
 
         return false;
     }
-
-private:
-    uint32 _bossId;
 };
 
 class boss_halion : public CreatureScript
@@ -355,8 +351,6 @@ class boss_halion : public CreatureScript
                 // so that the timer still ticks in phase two.
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
-
-                DoZoneInCombat();
             }
 
             void JustDied(Unit* /*killer*/)
@@ -396,7 +390,7 @@ class boss_halion : public CreatureScript
 
                 if (!spellInfo || (spellInfo && spellInfo->Id != SPELL_COPY_DAMAGE))
                 {
-                    DealDamageToOtherHalion(me->GetGUID(), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
+                    DealDamageToOtherHalion(DATA_TWILIGHT_HALION, spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
 
                     // Keep track of damage taken
                     if (events.GetPhaseMask() & PHASE_THREE_MASK)
@@ -558,7 +552,7 @@ class boss_twilight_halion : public CreatureScript
 
                 if (!spellInfo || spellInfo->Id != SPELL_COPY_DAMAGE)
                 {
-                    DealDamageToOtherHalion(me->GetGUID(), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
+                    DealDamageToOtherHalion(DATA_HALION, spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
 
                     // Keep track of damage taken.
                     if (events.GetPhaseMask() & PHASE_THREE_MASK)
@@ -914,7 +908,6 @@ class npc_halion_controller : public CreatureScript
                     }
                 }
             }
-
 
             uint32 GetSpell(uint32 pctValue, bool isTwilight = false)
             {
