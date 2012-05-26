@@ -295,7 +295,7 @@ struct generic_halionAI : public BossAI
         for (std::list<HostileReference*>::const_iterator itr = hostileList.begin(); itr != hostileList.end(); ++itr)
             if (Unit* target = (*itr)->getTarget())
                 if (target->GetTypeId() == TYPEID_PLAYER)
-                    if (target->HasAura(SPELL_TWILIGHT_REALM) && target->isAlive())
+                    if (me->InSamePhase(target) && target->isAlive())
                         return true;
 
         if (Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
@@ -1301,16 +1301,16 @@ class go_twilight_portal : public GameObjectScript
         struct go_twilight_portalAI : public GameObjectAI
         {
             go_twilight_portalAI(GameObject* gameobject) : GameObjectAI(gameobject),
-                _instance(go->GetInstanceScript()), _deleted(false)
+                _instance(gameobject->GetInstanceScript()), _deleted(false)
             {
-                switch (go->GetEntry())
+                switch (gameobject->GetEntry())
                 {
                     case GO_HALION_PORTAL_EXIT:
-                        go->SetPhaseMask(0x20, true);
+                        gameobject->SetPhaseMask(0x20, true);
                         break;
                     case GO_HALION_PORTAL_1:
                     case GO_HALION_PORTAL_2:
-                        go->SetPhaseMask(0x1, true);
+                        gameobject->SetPhaseMask(0x1, true);
                         break;
                     default:
                         break;
@@ -1341,9 +1341,9 @@ class go_twilight_portal : public GameObjectScript
             bool _deleted;
         };
 
-        GameObjectAI* GetAI(GameObject* go) const
+        GameObjectAI* GetAI(GameObject* gameobject) const
         {
-            return GetRubySanctumAI<go_twilight_portalAI>(go);
+            return GetRubySanctumAI<go_twilight_portalAI>(gameobject);
         }
 };
 
