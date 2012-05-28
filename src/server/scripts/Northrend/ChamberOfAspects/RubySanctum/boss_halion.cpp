@@ -390,7 +390,7 @@ class boss_halion : public CreatureScript
 
                 if (!spellInfo || (spellInfo && spellInfo->Id != SPELL_COPY_DAMAGE))
                 {
-                    DealDamageToOtherHalion(DATA_TWILIGHT_HALION, spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
+                    DealDamageToOtherHalion(instance->GetData64(DATA_TWILIGHT_HALION), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
 
                     // Keep track of damage taken
                     if (events.GetPhaseMask() & PHASE_THREE_MASK)
@@ -552,7 +552,7 @@ class boss_twilight_halion : public CreatureScript
 
                 if (!spellInfo || spellInfo->Id != SPELL_COPY_DAMAGE)
                 {
-                    DealDamageToOtherHalion(DATA_HALION, spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
+                    DealDamageToOtherHalion(instance->GetData64(DATA_HALION), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
 
                     // Keep track of damage taken.
                     if (events.GetPhaseMask() & PHASE_THREE_MASK)
