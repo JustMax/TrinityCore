@@ -4,12 +4,12 @@
 -- Combustion / Consumption scaling aura
 DELETE FROM `spell_dbc` WHERE `id`=70507;
 INSERT INTO `spell_dbc` (`Id`,`Attributes`,`AttributesEx`,`AttributesEx2`,`CastingTimeIndex`,`ProcChance`,`DurationIndex`,`RangeIndex`,`StackAmount`,`Effect1`,`EffectBasePoints1`,`EffectImplicitTargetA1`,`EffectApplyAuraName1`,`DmgMultiplier1`,`Comment`) VALUES
-(70507,0x00000100,0x00000400,0x0,1,101,21,1,99,6,10,1,61,1, 'Halion - Combustion & Consumption Scale Aura');
+(70507,0x00000100,0x00000400,0x0,1,101,21,1,99,6,10,1,61,1, 'Halion - Combustion & Consumption Scale Aura (guessed values)');
 
 -- Copy damage spell
 DELETE FROM `spell_dbc` WHERE `id`=74810;
 INSERT INTO `spell_dbc` (`Id`,`Attributes`,`AttributesEx`,`AttributesEx2`,`AttributesEx3`,`AttributesEx4`,`AttributesEx5`,`AttributesEx6`,`AttributesEx7`,`CastingTimeIndex`,`Effect1`,`EffectImplicitTargetA1`,`MaxAffectedTargets`,`Comment`) VALUES
-(74810,0,0x00010488,0x20000000,0x2004000,0,0x00060008,0x21002000,0,1,3,25,1, 'Halion - Copy Damage');
+(74810,0,0x00010488,0x20000000,0x2004000,0,0x00060008,0x21002000,0,1,3,25,1, 'Halion - Copy Damage (guessed values)');
 
 -- Bosses respawn time
 UPDATE `creature` SET `spawntimesecs`=604800 WHERE `id` IN (39751, 39746, 39747);
@@ -156,7 +156,7 @@ INSERT INTO `gameobject` (`guid`,`id`,`map`,`spawnMask`,`phaseMask`,`position_x`
 SET @GUID = 850000; -- Set guid (3 required)
 DELETE FROM `creature` WHERE `id` IN (40081,40091); -- ,40151);
 INSERT INTO `creature` (`guid`,`id`,`map`,`spawnMask`,`phaseMask`,`modelid`,`equipment_id`,`position_x`,`position_y`,`position_z`,`orientation`,`spawntimesecs`,`spawndist`,`currentwaypoint`,`curhealth`,`curmana`,`MovementType`,`npcflag`,`unit_flags`,`dynamicflags`) VALUES
-(@GUID,40091,724,1,0x20,0,0,3113.711,533.5382,72.96869,1.936719,300,0,0,1,0,0,0,0,0), -- Orb Rotation Focus
+(@GUID,40091,724,1,0x20,0,0,3113.711,533.5382,72.96869,1.936719,300,0,0,1,0,2,0,0,0), -- Orb Rotation Focus
 (@GUID+1,40081,724,1,0x20,0,0,3153.75,533.1875,72.97205,0,300,0,0,1,0,0,0,0,0); -- Orb Carrier
 -- (@GUID+2,40151,724,1,0x21,0,0,3153.75,533.1875,72.97205,0,300,0,0,1,0,0,0,0,0); -- Combat Stalker (TODO: move to cpp. sniff prooves it is not spawned pre fight)
 
@@ -254,22 +254,28 @@ UPDATE `creature_template` SET
 WHERE `entry`=40001; -- Combustion
 
 UPDATE `creature_template` SET
-    `InhabitType`=0x4,
+    `InhabitType`=5,
     `speed_walk`=1.2,
     `speed_run`=0.428571432828903,
     `VehicleId`=718,
-    `minlevel`=80, `maxlevel`=80,
-    `Faction_H`=14, `Faction_A`=14,
+    `minlevel`=80,
+    `maxlevel`=80,
+    `faction_H`=14,
+    `faction_A`=14,
     `unit_flags`=0x2000100
-WHERE `entry`=40081; -- Orb Carrier
+WHERE `entry` in (40081,40470,40471,40472); -- Orb Carrier
 
 UPDATE `creature_template` SET
     `speed_walk`=2.2,
     `speed_run`=0.785714268684387,
-    `minlevel`=80, `maxlevel`=80,
-    `faction_H`=14, `faction_A`=14,
+    `minlevel`=80,
+    `maxlevel`=80,
+    `faction_H`=14,
+    `faction_A`=14,
     `unit_flags`=0x2000100
-WHERE `entry`=40091; -- Orb Rotation Focus
+WHERE `entry` IN (40091,43280,43281,43282); -- Orb Rotation Focus
+
+UPDATE `creature_template` SET `difficulty_entry_1`=43280,`difficulty_entry_2`=43281,`difficulty_entry_3`=43282 WHERE `entry`=40091;
 
 UPDATE `creature_template` SET
     `flags_extra`=130,
@@ -284,7 +290,7 @@ UPDATE `creature_template` SET
     `unit_flags`=0x2000100
 WHERE `entry`=40146; -- 40146 - Halion Controller
 
-DELETE FROM `creature_template_addon` WHERE `entry` IN (40142, 40146, 40001, 40135, 40100, 40469, 40468, 40083, 39863, 40091);
+DELETE FROM `creature_template_addon` WHERE `entry` IN (40142, 40146, 40001, 40135, 40100, 40469, 40468, 40083, 39863, 40081, 40091);
 INSERT INTO `creature_template_addon` (`entry`, `mount`, `bytes1`, `bytes2`, `auras`) VALUES
 (40142, 0, 0x0, 0x1, '75476'),
 (40146, 0, 0x0, 0x1, ''),
@@ -295,4 +301,5 @@ INSERT INTO `creature_template_addon` (`entry`, `mount`, `bytes1`, `bytes2`, `au
 (40083, 0, 0x2000000, 0x1, ''),
 (40100, 0, 0x2000000, 0x1, ''),
 (39863, 0, 0x0, 0x1, '78243'),
+(40081, 0, 0x2000000, 0x1, ''),
 (40091, 0, 0x0, 0x1, '');

@@ -294,7 +294,7 @@ struct generic_halionAI : public BossAI
         for (std::list<HostileReference*>::const_iterator itr = hostileList.begin(); itr != hostileList.end(); ++itr)
             if (Unit* target = (*itr)->getTarget())
                 if (target->GetTypeId() == TYPEID_PLAYER)
-                    if (me->InSamePhase(target) && target->isAlive())
+                    if (me->canSeeOrDetect(target, true) && me->IsValidAttackTarget(target))
                         return true;
 
         if (Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
@@ -339,7 +339,6 @@ class boss_halion : public CreatureScript
                 instance->SetBossState(DATA_HALION, IN_PROGRESS);
 
                 events.SetPhase(PHASE_ONE);
-
                 // Schedule events without taking care of phases, since EventMap will not be updated under phase 2.
                 events.ScheduleEvent(EVENT_ACTIVATE_FIREWALL, 10000);
                 events.ScheduleEvent(EVENT_FLAME_BREATH, urand(10000, 12000));
@@ -366,6 +365,7 @@ class boss_halion : public CreatureScript
 
             void JustReachedHome()
             {
+                _JustReachedHome();
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->Reset();
             }
@@ -388,9 +388,13 @@ class boss_halion : public CreatureScript
                     return;
                 }
 
-                if (!spellInfo || (spellInfo && spellInfo->Id != SPELL_COPY_DAMAGE))
+                if (events.GetPhaseMask() & PHASE_ONE_MASK)
+                    return;
+
+                if (!spellInfo || spellInfo->Id != SPELL_COPY_DAMAGE)
                 {
-                    DealDamageToOtherHalion(instance->GetData64(DATA_TWILIGHT_HALION), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
+                    if (!DealDamageToOtherHalion(instance->GetData64(DATA_TWILIGHT_HALION), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage))
+                        return;
 
                     // Keep track of damage taken
                     if (events.GetPhaseMask() & PHASE_THREE_MASK)
@@ -500,12 +504,12 @@ class boss_twilight_halion : public CreatureScript
             {
                 generic_halionAI::Reset();
                 me->LoadCreaturesAddon(true);
-                _instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
             }
 
             void EnterCombat(Unit* /*who*/)
             {
-                if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION)))
+                if (Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
                     if (halion->GetHealth() != me->GetHealth())
                         me->SetHealth(halion->GetHealth());
             }
@@ -521,7 +525,7 @@ class boss_twilight_halion : public CreatureScript
 
             void JustDied(Unit* killer)
             {
-                if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION)))
+                if (Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
                 {
                     // Ensure looting
                     if (me->IsDamageEnoughForLootingAndReward())
@@ -531,10 +535,10 @@ class boss_twilight_halion : public CreatureScript
                         killer->Kill(halion);
                 }
 
-                if (Creature* controller = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION_CONTROLLER)))
+                if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->Kill(controller);
 
-                _instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
             }
 
             void DamageTaken(Unit* /*attacker*/, uint32& damage, SpellInfo const* spellInfo)
@@ -552,11 +556,12 @@ class boss_twilight_halion : public CreatureScript
 
                 if (!spellInfo || spellInfo->Id != SPELL_COPY_DAMAGE)
                 {
-                    DealDamageToOtherHalion(instance->GetData64(DATA_HALION), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage);
+                    if (!DealDamageToOtherHalion(instance->GetData64(DATA_HALION), spellInfo ? spellInfo->SchoolMask : SPELL_SCHOOL_MASK_SHADOW, damage))
+                        return;
 
                     // Keep track of damage taken.
                     if (events.GetPhaseMask() & PHASE_THREE_MASK)
-                        if (Creature* controller = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION_CONTROLLER)))
+                        if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                             controller->AI()->SetData(DATA_TWILIGHT_DAMAGE_TAKEN, damage);
                 }
             }
@@ -566,7 +571,7 @@ class boss_twilight_halion : public CreatureScript
                 if (spell->Id != SPELL_TWILIGHT_DIVISION)
                     return;
 
-                if (Creature* controller = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_HALION_CONTROLLER)))
+                if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_THREE);
             }
 
@@ -605,7 +610,7 @@ class boss_twilight_halion : public CreatureScript
                     // Bind events starting from phase two ONLY
                     if (value == PHASE_TWO)
                     {
-                        _instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 2);
+                        instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 2);
 
                         events.Reset();
                         events.SetPhase(value);
@@ -627,7 +632,6 @@ class boss_twilight_halion : public CreatureScript
             }
 
         private:
-            InstanceScript* _instance;
             EventMap events;
         };
 
@@ -943,11 +947,9 @@ class npc_orb_carrier : public CreatureScript
 
         struct npc_orb_carrierAI : public ScriptedAI
         {
-            npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature),
-                _instance(creature->GetInstanceScript())
+            npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature)
             {
                 ASSERT(creature->GetVehicleKit());
-                me->setActive(true);
             }
 
             void UpdateAI(uint32 const /*diff*/)
@@ -956,8 +958,7 @@ class npc_orb_carrier : public CreatureScript
                 //! However, refreshing it looks bad, so just cast the spell if
                 //! we are not channeling it.
                 if (!me->HasUnitState(UNIT_STATE_CASTING))
-                    if (Creature* rotationFocus = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_ORB_ROTATION_FOCUS)))
-                        me->CastSpell(rotationFocus, SPELL_TRACK_ROTATION, false);
+                    me->CastSpell((Unit*)NULL, SPELL_TRACK_ROTATION, false);
             }
 
             void DoAction(int32 const action)
@@ -994,9 +995,6 @@ class npc_orb_carrier : public CreatureScript
                     }
                 }
             }
-
-            private:
-                InstanceScript* _instance;
         };
 
         CreatureAI* GetAI(Creature* creature) const
