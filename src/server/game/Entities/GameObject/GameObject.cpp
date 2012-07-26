@@ -206,7 +206,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
 
     UpdateRotationFields(rotation2, rotation3);              // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
-    SetFloatValue(OBJECT_FIELD_SCALE_X, goinfo->size);
+    SetObjectScale(goinfo->size);
 
     SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
     SetUInt32Value(GAMEOBJECT_FLAGS, goinfo->flags);
@@ -338,7 +338,7 @@ void GameObject::Update(uint32 diff)
                 if (m_respawnTime <= now)            // timer expired
                 {
                     uint64 dbtableHighGuid = MAKE_NEW_GUID(m_DBTableGuid, GetEntry(), HIGHGUID_GAMEOBJECT);
-                    time_t linkedRespawntime = sObjectMgr->GetLinkedRespawnTime(dbtableHighGuid, GetMap()->GetInstanceId());
+                    time_t linkedRespawntime = GetMap()->GetLinkedRespawnTime(dbtableHighGuid);
                     if (linkedRespawntime)             // Can't respawn, the master is dead
                     {
                         uint64 targetGuid = sObjectMgr->GetLinkedRespawnGuid(dbtableHighGuid);
@@ -761,13 +761,13 @@ bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
         else
         {
             m_respawnDelayTime = data->spawntimesecs;
-            m_respawnTime = sObjectMgr->GetGORespawnTime(m_DBTableGuid, map->GetInstanceId());
+            m_respawnTime = GetMap()->GetGORespawnTime(m_DBTableGuid);
 
             // ready to respawn
             if (m_respawnTime && m_respawnTime <= time(NULL))
             {
                 m_respawnTime = 0;
-                sObjectMgr->RemoveGORespawnTime(m_DBTableGuid, GetInstanceId());
+                GetMap()->RemoveGORespawnTime(m_DBTableGuid);
             }
         }
     }
@@ -788,7 +788,7 @@ bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
 
 void GameObject::DeleteFromDB()
 {
-    sObjectMgr->RemoveGORespawnTime(m_DBTableGuid, GetInstanceId());
+    GetMap()->RemoveGORespawnTime(m_DBTableGuid);
     sObjectMgr->DeleteGOData(m_DBTableGuid);
 
     PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAMEOBJECT);
@@ -863,7 +863,7 @@ Unit* GameObject::GetOwner() const
 void GameObject::SaveRespawnTime()
 {
     if (m_goData && m_goData->dbData && m_respawnTime > time(NULL) && m_spawnedByDefault)
-        sObjectMgr->SaveGORespawnTime(m_DBTableGuid, GetInstanceId(), m_respawnTime);
+        GetMap()->SaveGORespawnTime(m_DBTableGuid, m_respawnTime);
 }
 
 bool GameObject::IsAlwaysVisibleFor(WorldObject const* seer) const
@@ -908,7 +908,7 @@ void GameObject::Respawn()
     if (m_spawnedByDefault && m_respawnTime > 0)
     {
         m_respawnTime = time(NULL);
-        sObjectMgr->RemoveGORespawnTime(m_DBTableGuid, GetInstanceId());
+        GetMap()->RemoveGORespawnTime(m_DBTableGuid);
     }
 }
 
@@ -1674,7 +1674,7 @@ void GameObject::CastSpell(Unit* target, uint32 spellId)
     else
     {
         trigger->setFaction(14);
-        // Set owner guid for target if no owner avalible - needed by trigger auras
+        // Set owner guid for target if no owner available - needed by trigger auras
         // - trigger gets despawned and there's no caster avalible (see AuraEffect::TriggerSpell())
         trigger->CastSpell(target ? target : trigger, spellInfo, true, 0, 0, target ? target->GetGUID() : 0);
     }
@@ -1711,7 +1711,13 @@ bool GameObject::IsInRange(float x, float y, float z, float radius) const
 
 void GameObject::EventInform(uint32 eventId)
 {
-    if (eventId && m_zoneScript)
+    if (!eventId)
+        return;
+
+    if (AI())
+        AI()->EventInform(eventId);
+
+    if (m_zoneScript)
         m_zoneScript->ProcessEvent(this, eventId);
 }
 

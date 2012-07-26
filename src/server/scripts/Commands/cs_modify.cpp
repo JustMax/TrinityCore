@@ -718,7 +718,7 @@ public:
                 (ChatHandler(player)).PSendSysMessage(LANG_YOURS_SIZE_CHANGED, handler->GetNameLink().c_str(), Scale);
         }
 
-        target->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+        target->SetObjectScale(Scale);
 
         return true;
     }
@@ -1390,7 +1390,7 @@ public:
         if (!target)
             target = handler->GetSession()->GetPlayer();
 
-		// check online security
+        // check online security
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
 
