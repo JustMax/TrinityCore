@@ -236,7 +236,7 @@ struct generic_halionAI : public BossAI
 
     void UpdateAI(uint32 const diff)
     {
-        if (!CheckCombatState())
+        if (!UpdateVictim())
             return;
 
         events.Update(diff);
@@ -261,52 +261,6 @@ struct generic_halionAI : public BossAI
         me->SendSpellNonMeleeDamageLog(&damageInfo);
         me->DealSpellDamage(&damageInfo, false);
         return true;
-    }
-
-    bool CheckCombatState()
-    {
-        if (instance->GetBossState(DATA_HALION) == IN_PROGRESS)
-        {
-            if (events.GetPhaseMask() & PHASE_ONE_MASK) // Phase one
-            {
-                if (!UpdateVictim())
-                    return false;
-            }
-            else if (events.GetPhaseMask() & (PHASE_TWO_MASK | PHASE_THREE_MASK)) // Phase two or three
-            {
-                if (!UpdateVictim() || !FindPossibleTarget())
-                    return false;
-            }
-        }
-        else
-        {
-            if (!UpdateVictim())
-                return false;
-        }
-
-        return true;
-    }
-
-    bool FindPossibleTarget()
-    {
-        std::list<HostileReference*> hostileList = me->getThreatManager().getThreatList();
-
-        for (std::list<HostileReference*>::const_iterator itr = hostileList.begin(); itr != hostileList.end(); ++itr)
-            if (Unit* target = (*itr)->getTarget())
-                if (target->GetTypeId() == TYPEID_PLAYER)
-                    if (me->canSeeOrDetect(target, true) && me->IsValidAttackTarget(target))
-                        return true;
-
-        if (Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
-            halion->AI()->EnterEvadeMode();
-
-        if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_TWILIGHT_HALION)))
-            twilightHalion->AI()->EnterEvadeMode();
-
-        if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
-            controller->AI()->EnterEvadeMode();
-
-        return false;
     }
 };
 
@@ -454,9 +408,9 @@ class boss_halion : public CreatureScript
                         events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 25000);
                         break;
                     }
-                default:
-                    generic_halionAI::ExecuteEvent(eventId);
-                    break;
+                    default:
+                        generic_halionAI::ExecuteEvent(eventId);
+                        break;
                 }
             }
 
@@ -496,15 +450,20 @@ class boss_twilight_halion : public CreatureScript
         {
             boss_twilight_halionAI(Creature* creature) : generic_halionAI(creature, DATA_TWILIGHT_HALION)
             {
-                me->SetPhaseMask(0x20, true); // Should not be visible with phasemask 0x21, so only 0x20
+                me->SetPhaseMask(0x20, true);
                 events.SetPhase(PHASE_ONE);
+
+                me->SetReactState(REACT_PASSIVE);
             }
 
             void Reset()
             {
                 generic_halionAI::Reset();
-                me->LoadCreaturesAddon(true);
+
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+
+                me->LoadCreaturesAddon(true);
+                me->SetReactState(REACT_PASSIVE);
             }
 
             void EnterCombat(Unit* /*who*/)
@@ -607,19 +566,19 @@ class boss_twilight_halion : public CreatureScript
             {
                 if (index == DATA_FIGHT_PHASE)
                 {
+                    events.SetPhase(value);
                     // Bind events starting from phase two ONLY
                     if (value == PHASE_TWO)
                     {
                         instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 2);
 
+                        me->SetReactState(REACT_AGGRESSIVE);
+                        
                         events.Reset();
-                        events.SetPhase(value);
                         events.ScheduleEvent(EVENT_DARK_BREATH, urand(10000, 15000));
                         events.ScheduleEvent(EVENT_SOUL_CONSUMPTION, 20000);
                         events.ScheduleEvent(EVENT_TAIL_LASH, 10000);
                     }
-                    else
-                        events.SetPhase(value);
                 }
             }
 
@@ -690,6 +649,14 @@ class npc_halion_controller : public CreatureScript
                     default:
                         break;
                 }
+            }
+
+            void EnterEvadeMode()
+            {
+                ScriptedAI::EnterEvadeMode();
+                for (uint8 i = DATA_HALION; i <= DATA_TWILIGHT_HALION; i++)
+                    if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(i)))
+                        halion->AI()->EnterEvadeMode();
             }
 
             void UpdateAI(uint32 const diff)
@@ -773,12 +740,7 @@ class npc_halion_controller : public CreatureScript
                                     if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
                                     {
                                         twilightHalion->CastSpell(halion, SPELL_TWILIGHT_MENDING);
-
-                                        // TODO: I bet this is wrong
-                                        Map::PlayerList const & playerList = me->GetMap()->GetPlayers();
-                                        for (Map::PlayerList::const_iterator i = playerList.begin(); i != playerList.end(); ++i)
-                                            if (Player* player = i->getSource())
-                                                Talk(EMOTE_REGENERATE, player->GetGUID());
+                                        Talk(EMOTE_REGENERATE);
                                     }
                                 }
                                 _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 15000);
@@ -947,18 +909,26 @@ class npc_orb_carrier : public CreatureScript
 
         struct npc_orb_carrierAI : public ScriptedAI
         {
-            npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature)
+            npc_orb_carrierAI(Creature* creature) : ScriptedAI(creature),
+                instance(creature->GetInstanceScript())
             {
                 ASSERT(creature->GetVehicleKit());
             }
 
             void UpdateAI(uint32 const /*diff*/)
             {
-                //! According to sniffs this spell is cast every 1 or 2 seconds.
-                //! However, refreshing it looks bad, so just cast the spell if
-                //! we are not channeling it.
+                /// According to sniffs this spell is cast every 1 or 2 seconds.
+                /// However, refreshing it looks bad, so just cast the spell if
+                /// we are not channeling it.
                 if (!me->HasUnitState(UNIT_STATE_CASTING))
                     me->CastSpell((Unit*)NULL, SPELL_TRACK_ROTATION, false);
+
+                /// "WORKAROUND": SPELL_TRACK_ROTATION has SPELL_ATTR1_CHANNEL_TRACK_TARGET
+                /// but we do NOT handle that flag serverside, client handles it by sending
+                /// multiple facing packets. Since we have two creatures here, there is no
+                /// packet. :blizzard:
+                if (Creature* rotationFocus = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_ORB_ROTATION_FOCUS)))
+                    me->SetInFront(rotationFocus);
             }
 
             void DoAction(int32 const action)
@@ -995,6 +965,8 @@ class npc_orb_carrier : public CreatureScript
                     }
                 }
             }
+        private:
+            InstanceScript* instance;
         };
 
         CreatureAI* GetAI(Creature* creature) const
@@ -1479,7 +1451,7 @@ class spell_halion_marks : public SpellScriptLoader
                 CustomSpellValues values;
                 values.AddSpellMod(SPELLVALUE_BASE_POINT1, stacks);
 
-                target->CastCustomSpell(_summonSpell, values, target, true, NULL, NULL, GetCasterGUID());
+                target->CastCustomSpell(_summonSpell, values, target, TRIGGERED_FULL_MASK, NULL, NULL, GetCasterGUID());
             }
 
             void Register()
