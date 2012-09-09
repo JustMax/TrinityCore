@@ -466,13 +466,6 @@ class boss_twilight_halion : public CreatureScript
                 me->SetReactState(REACT_PASSIVE);
             }
 
-            void EnterCombat(Unit* /*who*/)
-            {
-                if (Creature* halion = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION)))
-                    if (halion->GetHealth() != me->GetHealth())
-                        me->SetHealth(halion->GetHealth());
-            }
-
             void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() == TYPEID_PLAYER)
@@ -810,6 +803,8 @@ class npc_halion_controller : public CreatureScript
                         {
                             case PHASE_ONE:
                                 me->SetInCombatWithZone();
+                                if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
+                                    twilightHalion->SetInCombatWithZone();
                                 _events.ScheduleEvent(EVENT_TRIGGER_BERSERK, 8 * MINUTE * IN_MILLISECONDS);
                                 break;
                             case PHASE_TWO:
@@ -923,12 +918,8 @@ class npc_orb_carrier : public CreatureScript
                 if (!me->HasUnitState(UNIT_STATE_CASTING))
                     me->CastSpell((Unit*)NULL, SPELL_TRACK_ROTATION, false);
 
-                /// "WORKAROUND": SPELL_TRACK_ROTATION has SPELL_ATTR1_CHANNEL_TRACK_TARGET
-                /// but we do NOT handle that flag serverside, client handles it by sending
-                /// multiple facing packets. Since we have two creatures here, there is no
-                /// packet. :blizzard:
                 if (Creature* rotationFocus = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_ORB_ROTATION_FOCUS)))
-                    me->SetInFront(rotationFocus);
+                    me->UpdateOrientation(me->GetAngle(rotationFocus));
             }
 
             void DoAction(int32 const action)
