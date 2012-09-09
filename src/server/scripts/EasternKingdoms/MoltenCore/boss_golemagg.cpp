@@ -77,7 +77,7 @@ class boss_golemagg : public CreatureScript
 
             void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/, SpellInfo const* /*spellInfo*/)
             {
-                if (HealthBelowPct(10) || me->HasAura(SPELL_ENRAGE))
+                if (!HealthBelowPct(10) || me->HasAura(SPELL_ENRAGE))
                     return;
 
                 DoCast(me, SPELL_ENRAGE, true);

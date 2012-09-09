@@ -719,11 +719,11 @@ void WorldSession::HandleCharDeleteOpcode(WorldPacket & recv_data)
     sScriptMgr->OnPlayerDelete(guid);
     sWorld->DeleteCharaceterNameData(GUID_LOPART(guid));
 
-    if (sLog->ShouldLog(LOG_FILTER_CHARACTER, LOG_LEVEL_DEBUG)) // optimize GetPlayerDump call
+    if (sLog->ShouldLog(LOG_FILTER_PLAYER_DUMP, LOG_LEVEL_INFO)) // optimize GetPlayerDump call
     {
         std::string dump;
         if (PlayerDumpWriter().GetDump(GUID_LOPART(guid), dump))
-            sLog->outDebug(LOG_FILTER_CHARACTER, dump.c_str(), GetAccountId(), GUID_LOPART(guid), name.c_str());
+            sLog->outCharDump(dump.c_str(), GetAccountId(), GUID_LOPART(guid), name.c_str());
     }
 
     Player::DeleteFromDB(guid, GetAccountId());
@@ -1308,12 +1308,29 @@ void WorldSession::HandleAlterAppearance(WorldPacket & recv_data)
     if (bs_skinColor && (bs_skinColor->type != 3 || bs_skinColor->race != _player->getRace() || bs_skinColor->gender != _player->getGender()))
         return;
 
-    uint32 Cost = _player->GetBarberShopCost(bs_hair->hair_id, Color, bs_facialHair->hair_id, bs_skinColor);
+    GameObject* go = _player->FindNearestGameObjectOfType(GAMEOBJECT_TYPE_BARBER_CHAIR, 5.0f);
+    if (!go)
+    {
+        WorldPacket data(SMSG_BARBER_SHOP_RESULT, 4);
+        data << uint32(2);
+        SendPacket(&data);
+        return;
+    }
+
+    if (_player->getStandState() != UNIT_STAND_STATE_SIT_LOW_CHAIR + go->GetGOInfo()->barberChair.chairheight)
+    {
+        WorldPacket data(SMSG_BARBER_SHOP_RESULT, 4);
+        data << uint32(2);
+        SendPacket(&data);
+        return;
+    }
+
+    uint32 cost = _player->GetBarberShopCost(bs_hair->hair_id, Color, bs_facialHair->hair_id, bs_skinColor);
 
     // 0 - ok
     // 1, 3 - not enough money
     // 2 - you have to seat on barber chair
-    if (!_player->HasEnoughMoney(Cost))
+    if (!_player->HasEnoughMoney(cost))
     {
         WorldPacket data(SMSG_BARBER_SHOP_RESULT, 4);
         data << uint32(1);                                  // no money
@@ -1327,8 +1344,8 @@ void WorldSession::HandleAlterAppearance(WorldPacket & recv_data)
         SendPacket(&data);
     }
 
-    _player->ModifyMoney(-int32(Cost));                     // it isn't free
-    _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_AT_BARBER, Cost);
+    _player->ModifyMoney(-int32(cost));                     // it isn't free
+    _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_AT_BARBER, cost);
 
     _player->SetByteValue(PLAYER_BYTES, 2, uint8(bs_hair->hair_id));
     _player->SetByteValue(PLAYER_BYTES, 3, uint8(Color));

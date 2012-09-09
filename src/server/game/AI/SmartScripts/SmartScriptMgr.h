@@ -484,8 +484,9 @@ enum SMART_ACTION
     SMART_ACTION_SEND_GOSSIP_MENU                   = 98,     // menuId, optionId
     SMART_ACTION_GO_SET_LOOT_STATE                  = 99,     // state
     SMART_ACTION_SEND_TARGET_TO_TARGET              = 100,    // id
+    SMART_ACTION_SET_HOME_POS                       = 101,    // none
 
-    SMART_ACTION_END                                = 101,
+    SMART_ACTION_END                                = 102,
 };
 
 struct SmartAction
@@ -1215,16 +1216,9 @@ enum SmartCastFlags
 // one line in DB is one event
 struct SmartScriptHolder
 {
-    SmartScriptHolder()
-    {
-        timer = 0;
-        active = false;
-        runOnce = false;
-        link = 0;
-        entryOrGuid = 0;
-        event_id = 0;
-        enableTimed = false;
-    }
+    SmartScriptHolder() : timer(0), active(false), runOnce(false), link(0), entryOrGuid(0),
+        event_id(0), enableTimed(false), source_type(SMART_SCRIPT_TYPE_CREATURE) {}
+
     int32 entryOrGuid;
     SmartScriptType source_type;
     uint32 event_id;
@@ -1436,7 +1430,7 @@ class SmartAIMgr
             return true;
         }
 
-        bool IsTextValid(SmartScriptHolder const& e, uint32 id);
+        //bool IsTextValid(SmartScriptHolder const& e, uint32 id);
 };
 
 #define sSmartScriptMgr ACE_Singleton<SmartAIMgr, ACE_Null_Mutex>::instance()
