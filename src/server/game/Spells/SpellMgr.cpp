@@ -3564,7 +3564,7 @@ void SpellMgr::LoadDbcDataCorrections()
                 spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_25_YARDS;   // 25yd
                 break;
             case 72405: // Broken Frostmourne
-                spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_200_YARDS;   // 200yd
+                spellInfo->EffectRadiusIndex[1] = EFFECT_RADIUS_200_YARDS; // 200yd
                 break;
             case 40055: // Introspection
             case 40165: // Introspection
@@ -3575,6 +3575,12 @@ void SpellMgr::LoadDbcDataCorrections()
             case 2378: // Minor Fortitude
                 spellInfo->manaCost = 0;
                 spellInfo->manaPerSecond = 0;
+                break;
+            case 74769: // Twilight Cutter
+            case 77844: // Twilight Cutter
+            case 77845: // Twilight Cutter
+            case 77846: // Twilight Cutter
+                spellInfo->EffectRadiusIndex[0] = EFFECT_RADIUS_100_YARDS; // 100yd
                 break;
             default:
                 break;
