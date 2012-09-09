@@ -15,7 +15,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptPCH.h"
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
 #include "Spell.h"
@@ -211,11 +210,9 @@ CorporealityEntry _corporealityReference[MAX_CORPOREALITY_STATE] = {
 
 struct generic_halionAI : public BossAI
 {
-    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId)
-    {
-    }
+    generic_halionAI(Creature* creature, uint32 bossId) : BossAI(creature, bossId) { }
 
-    void EnterCombat(Unit* who)
+    void EnterCombat(Unit* /*who*/)
     {
         Talk(SAY_AGGRO);
         _EnterCombat();
@@ -277,7 +274,6 @@ class boss_halion : public CreatureScript
             {
                 generic_halionAI::Reset();
                 events.SetPhase(PHASE_ONE);
-                me->SetReactState(REACT_DEFENSIVE);
 
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
 
@@ -293,23 +289,29 @@ class boss_halion : public CreatureScript
                 instance->SetBossState(DATA_HALION, IN_PROGRESS);
 
                 events.SetPhase(PHASE_ONE);
-                // Schedule events without taking care of phases, since EventMap will not be updated under phase 2.
                 events.ScheduleEvent(EVENT_ACTIVATE_FIREWALL, 10000);
                 events.ScheduleEvent(EVENT_FLAME_BREATH, urand(10000, 12000));
                 events.ScheduleEvent(EVENT_METEOR_STRIKE, urand(20000, 25000));
                 events.ScheduleEvent(EVENT_FIERY_COMBUSTION, urand(15000, 18000));
                 events.ScheduleEvent(EVENT_TAIL_LASH, 10000);
 
-                // Due to Halion's EventMap not being updated under phase two, Berserk will be triggered by the Controller
-                // so that the timer still ticks in phase two.
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_HALION_CONTROLLER)))
                     controller->AI()->SetData(DATA_FIGHT_PHASE, PHASE_ONE);
             }
 
+            void EnterEvadeMode()
+            {
+                // Evading mechanics:
+                // 1. Halion should evade on wipe on phase one
+                // 2. Halion should evade if and only if no player is left in both realm (ie. when the controller evades)
+                _EnterEvadeMode();
+            }
+
             void JustDied(Unit* /*killer*/)
             {
-                Talk(SAY_DEATH);
                 _JustDied();
+
+                Talk(SAY_DEATH);
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
@@ -341,9 +343,6 @@ class boss_halion : public CreatureScript
 
                     return;
                 }
-
-                if (events.GetPhaseMask() & PHASE_ONE_MASK)
-                    return;
 
                 if (!spellInfo || spellInfo->Id != SPELL_COPY_DAMAGE)
                 {
@@ -400,10 +399,7 @@ class boss_halion : public CreatureScript
                     }
                     case EVENT_FIERY_COMBUSTION:
                     {
-                        Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_TWILIGHT_REALM);
-                        if (!target)
-                            target = SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true, -SPELL_TWILIGHT_REALM);
-                        if (target)
+                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true, -SPELL_TWILIGHT_REALM))
                             DoCast(target, SPELL_FIERY_COMBUSTION);
                         events.ScheduleEvent(EVENT_FIERY_COMBUSTION, 25000);
                         break;
@@ -649,7 +645,8 @@ class npc_halion_controller : public CreatureScript
                 ScriptedAI::EnterEvadeMode();
                 for (uint8 i = DATA_HALION; i <= DATA_TWILIGHT_HALION; i++)
                     if (Creature* halion = ObjectAccessor::GetCreature(*me, _instance->GetData64(i)))
-                        halion->AI()->EnterEvadeMode();
+                        if (!halion->IsInEvadeMode())
+                            halion->AI()->EnterEvadeMode();
             }
 
             void UpdateAI(uint32 const diff)
@@ -659,6 +656,10 @@ class npc_halion_controller : public CreatureScript
                     return;
 
                 _events.Update(diff);
+
+                _corporealityCheck ^= true;
+                if (_corporealityCheck)
+                    CheckCorporeality();
 
                 while (uint32 eventId = _events.ExecuteEvent())
                 {
@@ -707,7 +708,8 @@ class npc_halion_controller : public CreatureScript
                             break;
                         case EVENT_CHECK_CORPOREALITY:
                         {
-                            // Todo: Rework all this.
+                            // Todo: Rework all this, it's all guesses and can be improved.
+                            // Corporeality should be eval'd all along phase 3. It's not timer-based.
                             bool canUpdate = false;
                             if (MaterialDamageTaken != 0 && TwilightDamageTaken != 0)
                             {
@@ -755,9 +757,10 @@ class npc_halion_controller : public CreatureScript
                                 }
 
                                 _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_MATERIAL, materialCorporealityValue);
-                                _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TWILIGHT, (100 - materialCorporealityValue));
+                                _instance->DoUpdateWorldState(WORLDSTATE_CORPOREALITY_TWILIGHT, 100 - materialCorporealityValue);
 
-                                Map::PlayerList const &playersList = me->GetMap()->GetPlayers();
+                                // This is probably totally wrong
+                                Map::PlayerList const& playersList = me->GetMap()->GetPlayers();
                                 for (Map::PlayerList::const_iterator i = playersList.begin(); i != playersList.end(); ++i)
                                 {
                                     if (Player* player = i->getSource())
@@ -779,6 +782,7 @@ class npc_halion_controller : public CreatureScript
                                     }
                                 }
                             }
+                            // Timer is guessed from videos.
                             _events.ScheduleEvent(EVENT_CHECK_CORPOREALITY, 15000);
                             break;
                         }
@@ -808,7 +812,9 @@ class npc_halion_controller : public CreatureScript
                                 _events.ScheduleEvent(EVENT_TRIGGER_BERSERK, 8 * MINUTE * IN_MILLISECONDS);
                                 break;
                             case PHASE_TWO:
-                                _events.ScheduleEvent(EVENT_SHADOW_PULSARS_SHOOT, 10000); // Fix the timer
+                                // Timer taken from a 4.3.4 solo video and confirmed by TankSpot's 3.3.5 guide.
+                                // http://www.tankspot.com/showthread.php?67195-Halion-Encounter-Guide-Live
+                                _events.ScheduleEvent(EVENT_SHADOW_PULSARS_SHOOT, 29000);
                                 if (Creature* twilightHalion = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_TWILIGHT_HALION)))
                                     twilightHalion->AI()->SetData(DATA_FIGHT_PHASE, PHASE_TWO);
                                 break;
@@ -870,7 +876,7 @@ class npc_halion_controller : public CreatureScript
                 }
             }
 
-            uint32 GetSpell(uint32 pctValue, bool isTwilight = false)
+            uint32 GetSpell(uint32 pctValue, bool isTwilight = false) const
             {
                 for (uint8 i = 0; i < MAX_CORPOREALITY_STATE; i++)
                     if (_corporealityReference[i].materialPercentage == pctValue)
@@ -883,6 +889,7 @@ class npc_halion_controller : public CreatureScript
             SummonList _summons;
 
             bool _playingIntro;
+            bool _corporealityCheck;
 
             uint32 TwilightDamageTaken;
             uint32 MaterialDamageTaken;
@@ -1408,17 +1415,14 @@ class spell_halion_marks : public SpellScriptLoader
                 return true;
             }
 
-            //! We were purged. Force removed stacks to zero
-            //! and trigger the appropriated remove handler.
-            //! See spell_halion_combustion_consumption_AuraScript::OnRemove
+            /// We were purged. Force removed stacks to zero
+            /// and trigger the appropriated remove handler.
+            /// See spell_halion_combustion_consumption_AuraScript::OnRemove
             void BeforeDispel(DispelInfo* dispelData)
             {
                 Unit* dispelledUnit = dispelData->GetDispelled();
                 // Prevent any stack from being removed at this point.
                 dispelData->SetRemovedCharges(0);
-
-                if (!dispelledUnit) // Should never be false. Just checking.
-                    return;
 
                 if (dispelledUnit->HasAura(SPELL_FIERY_COMBUSTION))
                     dispelledUnit->RemoveAurasDueToSpell(SPELL_FIERY_COMBUSTION, 0, 0, AURA_REMOVE_BY_EXPIRE);
@@ -1431,10 +1435,6 @@ class spell_halion_marks : public SpellScriptLoader
                 Unit* target = GetTarget();
 
                 if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
-                    return;
-
-                InstanceScript* instance = target->GetInstanceScript();
-                if (!instance)
                     return;
 
                 uint8 stacks = aurEff->GetBase()->GetStackAmount();
@@ -1479,10 +1479,6 @@ class spell_halion_damage_aoe_summon : public SpellScriptLoader
                 uint32 entry = uint32(GetSpellInfo()->Effects[effIndex].MiscValue);
                 SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(uint32(GetSpellInfo()->Effects[effIndex].MiscValueB));
                 uint32 duration = uint32(GetSpellInfo()->GetDuration());
-
-                InstanceScript* instance = caster->GetInstanceScript();
-                if (!instance)
-                    return;
 
                 Position pos;
                 caster->GetPosition(&pos);

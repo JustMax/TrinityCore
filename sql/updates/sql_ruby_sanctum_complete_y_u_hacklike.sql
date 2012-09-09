@@ -180,7 +180,8 @@ UPDATE `creature_template` SET
     `faction_H`=14, `faction_A`=14,
     `unit_flags`=0x88840,
     `BaseAttackTime`=1800,
-    `DynamicFlags`=0xC
+    `DynamicFlags`=0xC,
+    `RegenHealth`=0
 WHERE `entry`=40142; -- Twilight Halion
 
 UPDATE `creature_template` SET
