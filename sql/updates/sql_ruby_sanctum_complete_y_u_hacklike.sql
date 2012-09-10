@@ -92,15 +92,13 @@ INSERT INTO `creature_text` (`entry`,`groupid`,`id`,`text`,`type`,`language`,`pr
 (39863,4,0, 'Relish this victory, mortals, for it will be your last! This world will burn with the master''s return!',14,0,100,0,0,17503, 'Halion'),
 (39863,5,0, 'Another "hero" falls.',14,0,100,0,0,17501, 'Halion'),
 (39863,6,0, 'Not good enough.',14,0,100,0,0,17504, 'Halion'),
+(39863,7,0, 'Your efforts force %s further out of the physical realm!',41,0,100,0,0,0, 'Halion'),
+(39863,8,0, 'Your companions'' efforts force %s further into the physical realm!',41,0,100,0,0,0, 'Halion'),
 
 (40142,0,0, 'Beware the shadow!',14,0,100,0,0,17506, 'Halion'),
 (40142,1,0, 'I am the light and the darkness! Cower, mortals, before the herald of Deathwing!',14,0,100,0,0,17508, 'Halion'),
-
-(40146,0,0, 'Your companion''s efforts have forced Halion further out of the Physical realm!',42,0,100,0,0,0, 'Halion Controller'),
-(40146,1,0, 'Your efforts have forced Halion further into the Physical realm!',42,0,100,0,0,0, 'Halion Controller'),
-(40146,2,0, 'Your companion''s efforts have forced Halion further out of the Twilight realm!',42,0,100,0,0,0, 'Halion Controller'),
-(40146,3,0, 'Your efforts have forced Halion further into the Twilight realm!',42,0,100,0,0,0, 'Halion Controller'),
-(40146,4,0, 'Without pressure in both realms, Halion begins to regenerate.',42,0,100,0,0,0, 'Halion Controller'),
+(40142,2,0, 'Your companions'' efforts force %s further into the twilight realm!',41,0,100,0,0,0, 'Halion'),
+(40142,3,0, 'Your efforts force %s further out of the twilight realm!',41,0,100,0,0,0, 'Halion'),
 
 (40083,0,0, 'The orbiting spheres pulse with dark energy!',41,0,100,0,0,0, 'Shadow Orb');
 
